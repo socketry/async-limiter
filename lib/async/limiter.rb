@@ -3,6 +3,12 @@ require "async/task"
 module Async
   # Base class for all the limiters.
   class Limiter
+    Error = Class.new(StandardError)
+    ArgumentError = Class.new(Error)
+
+    MAX_LIMIT = Float::INFINITY
+    MIN_LIMIT = Float::MIN
+
     attr_reader :count
 
     attr_reader :limit
@@ -10,7 +16,7 @@ module Async
     attr_reader :waiting
 
     def initialize(limit = 1, parent: nil,
-      max_limit: Float::INFINITY, min_limit: 1)
+      max_limit: MAX_LIMIT, min_limit: MIN_LIMIT)
       @count = 0
       @limit = limit
       @waiting = []
@@ -56,7 +62,7 @@ module Async
 
     def decrease_limit(number = 1)
       new_limit = @limit - number
-      return false if new_limit < @min_limit || !new_limit.positive?
+      return false if new_limit < @min_limit
 
       @limit = new_limit
     end
@@ -88,15 +94,20 @@ module Async
     end
 
     def validate!
-      if max_limit < min_limit
-        raise "max_limit #{@max_limit} is lower than min_limit #{@min_limit}"
+      if @max_limit < @min_limit
+        raise ArgumentError, "max_limit is lower than min_limit"
       end
 
-      raise "max_limit must be positive" unless max_limit.positive?
-      raise "min_limit must be positive" unless min_limit.positive?
+      unless @max_limit.positive?
+        raise ArgumentError, "max_limit must be positive"
+      end
+
+      unless @min_limit.positive?
+        raise ArgumentError, "min_limit must be positive"
+      end
 
       unless @limit.between?(@min_limit, @max_limit)
-        raise "invalid limit #{@limit}"
+        raise ArgumentError, "limit not between min_limit and max_limit"
       end
     end
   end
