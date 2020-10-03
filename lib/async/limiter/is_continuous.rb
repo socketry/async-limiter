@@ -2,7 +2,7 @@ module Async
   module Limiter
     module IsContinuous
       def blocking?
-        window_limited?
+        window_limited? || window_frame_limited?
       end
 
       def release
@@ -32,7 +32,7 @@ module Async
       def schedule(parent: @parent || Task.current)
         parent.async do |task|
           while @waiting.any?
-            delay = self.delay
+            delay = delay(next_acquire_time)
             task.sleep(delay) if delay.positive?
             resume_waiting
           end
@@ -40,12 +40,12 @@ module Async
         end
       end
 
-      def delay
-        [next_acquire_time - Current.now, 0].max
+      def delay(time)
+        [time - Current.now, 0].max
       end
 
       def next_acquire_time
-        raise NotImplementedError
+        @burstable ? next_window_start_time : next_window_frame_start_time
       end
     end
   end

@@ -11,7 +11,7 @@ module Async
       end
 
       def blocking?
-        super && (@burstable || current_delay.positive?)
+        super && window_frame_limited?
       end
 
       def acquire
@@ -22,16 +22,16 @@ module Async
 
       private
 
-      def current_delay
-        [delay - elapsed_time, 0].max
+      def window_frame_limited?
+        @burstable || next_window_frame_start_time > Clock.now
       end
 
-      def delay
+      def next_window_frame_start_time
+        @last_acquired_time + window_frame
+      end
+
+      def window_frame
         @window.to_f / @limit
-      end
-
-      def elapsed_time
-        Clock.now - @last_acquired_time
       end
     end
   end

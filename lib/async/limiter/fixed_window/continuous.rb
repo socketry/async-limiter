@@ -1,5 +1,6 @@
 require_relative "../fixed_window"
 require_relative "../is_continuous"
+require_relative "../burstable"
 
 module Async
   module Limiter
@@ -11,13 +12,13 @@ module Async
     class FixedWindow
       class Continuous < FixedWindow
         include IsContinuous
+        include Burstable
 
         private
 
         def next_window_start_time
           window_index.next * @window
         end
-        alias_method :next_acquire_time, :next_window_start_time
       end
     end
   end

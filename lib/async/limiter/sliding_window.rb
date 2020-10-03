@@ -12,8 +12,8 @@ module Async
 
       attr_reader :window
 
-      def initialize(*args, window: 1, min_limit: 0, **options)
-        super(*args, min_limit: min_limit, **options)
+      def initialize(*args, window: 1, **options)
+        super(*args, **options)
 
         @window = window
         @acquired_times = []
