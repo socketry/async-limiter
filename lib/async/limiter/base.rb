@@ -24,6 +24,9 @@ module Async
         @max_limit = max_limit
         @min_limit = min_limit
 
+        @scheduler_task = nil
+        @scheduled = false
+
         validate!
       end
 
@@ -70,13 +73,39 @@ module Async
       def wait
         fiber = Fiber.current
 
-        if blocking?
+        # @waiting.any? check prevents fibers resumed via scheduler from
+        # slipping in operations before other waiting fibers get resumed.
+        if blocking? || (@scheduled && @waiting.any?)
           @waiting << fiber
-          Task.yield while blocking?
+          @scheduler_task ||= schedule if @scheduled
+          loop do
+            Task.yield # run this line at least once
+            break if !blocking?
+          end
         end
       rescue Exception # rubocop:disable Lint/RescueException
         @waiting.delete(fiber)
         raise
+      end
+
+      # Schedules resuming waiting tasks.
+      def schedule(parent: @parent || Task.current)
+        parent.async do |task|
+          while @waiting.any?
+            delay = delay(next_acquire_time)
+            task.sleep(delay) if delay.positive?
+            resume_waiting
+          end
+          @scheduler_task = nil
+        end
+      end
+
+      def delay(time)
+        [time - Current.now, 0].max
+      end
+
+      def next_acquire_time
+        raise NotImplementedError
       end
 
       def resume_waiting

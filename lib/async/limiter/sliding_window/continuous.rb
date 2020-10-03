@@ -14,6 +14,12 @@ module Async
         include IsContinuous
         include Burstable
 
+        def initialize(...)
+          super(...)
+
+          @scheduled = true
+        end
+
         private
 
         def next_window_start_time

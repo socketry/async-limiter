@@ -8,6 +8,7 @@ module Async
 
         @burstable = burstable
         @last_acquired_time = NULL_TIME
+        @scheduled = !@burstable
       end
 
       def blocking?
