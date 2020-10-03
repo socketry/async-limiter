@@ -1,5 +1,6 @@
 require "async/clock"
 require_relative "base"
+require_relative "burstable"
 
 module Async
   module Limiter
@@ -7,6 +8,8 @@ module Async
     # Example: You can perform N operations at 10:10:10.999, and then can
     # perform another N operations at 10:10:11.000.
     class FixedWindow < Base
+      include Burstable
+
       NULL_INDEX = -1
       attr_reader :window
 
