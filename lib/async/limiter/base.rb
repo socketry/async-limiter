@@ -67,10 +67,6 @@ module Async
         @limit = new_limit
       end
 
-      def waiting_count
-        @waiting.size
-      end
-
       private
 
       def under_limit?
@@ -81,7 +77,6 @@ module Async
         @limit - @count
       end
 
-      # rubocop:disable Lint/RescueException
       def wait
         fiber = Fiber.current
 
@@ -89,11 +84,10 @@ module Async
           @waiting << fiber
           Task.yield while blocking?
         end
-      rescue Exception
+      rescue Exception # rubocop:disable Lint/RescueException
         @waiting.delete(fiber)
         raise
       end
-      # rubocop:enable Lint/RescueException
 
       def validate!
         if @max_limit < @min_limit
