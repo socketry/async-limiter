@@ -31,7 +31,7 @@ module Async
       @count >= @limit
     end
 
-    def async(parent: (@parent or Task.current), **options)
+    def async(parent: (@parent || Task.current), **options)
       acquire
       parent.async(**options) do |task|
         yield task
@@ -81,6 +81,7 @@ module Async
       @limit - @count
     end
 
+    # rubocop:disable Lint/RescueException
     def wait
       fiber = Fiber.current
 
@@ -92,6 +93,7 @@ module Async
       @waiting.delete(fiber)
       raise
     end
+    # rubocop:enable Lint/RescueException
 
     def validate!
       if @max_limit < @min_limit

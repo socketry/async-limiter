@@ -33,7 +33,7 @@ module Async
       end
 
       def first_time_in_limit_scope
-        @acquired_times.fetch(@limit - 1) { -1 }
+        @acquired_times.fetch(@limit - 1, -1)
       end
 
       def window_start_time

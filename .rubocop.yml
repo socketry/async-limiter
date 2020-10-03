@@ -1,0 +1,15 @@
+require:
+  - "standard"
+  - "rubocop-rspec"
+
+inherit_gem:
+  standard: "config/base.yml"
+
+AllCops:
+  TargetRubyVersion: 2.7
+  Exclude:
+    - "bin/*"
+    - "tmp/**/*"
+
+Layout/LineLength:
+  Max: 80

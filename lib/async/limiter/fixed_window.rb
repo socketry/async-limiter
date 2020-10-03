@@ -33,7 +33,7 @@ module Async
       end
 
       def first_index_in_limit_scope
-        @acquired_window_indexes.fetch(@limit - 1) { -1 }
+        @acquired_window_indexes.fetch(@limit - 1, -1)
       end
 
       def window_index
