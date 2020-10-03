@@ -7,6 +7,7 @@ module Async
     # Example: You can perform N operations at 10:10:10.999, and then can
     # perform another N operations at 10:10:11.000.
     class FixedWindow < Limiter
+      NULL_INDEX = -1
       attr_reader :window
 
       def initialize(*args, window: 1, **options)
@@ -33,7 +34,7 @@ module Async
       end
 
       def first_index_in_limit_scope
-        @acquired_window_indexes.fetch(@limit - 1, -1)
+        @acquired_window_indexes.fetch(@limit - 1, NULL_INDEX)
       end
 
       def window_index

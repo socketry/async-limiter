@@ -7,6 +7,7 @@ module Async
     # Example: You can perform N operations at 10:10:10.999 but can't perform
     # another N operations until 10:10:11.999.
     class SlidingWindow < Limiter
+      NULL_TIME = -1
       attr_reader :window
 
       def initialize(*args, window: 1, min_limit: 0, **options)
@@ -33,7 +34,7 @@ module Async
       end
 
       def first_time_in_limit_scope
-        @acquired_times.fetch(@limit - 1, -1)
+        @acquired_times.fetch(@limit - 1, NULL_TIME)
       end
 
       def window_start_time
