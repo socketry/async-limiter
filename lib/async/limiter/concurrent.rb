@@ -1,10 +1,10 @@
-require_relative "../limiter"
+require_relative "base"
 
 module Async
-  class Limiter
+  module Limiter
     # Allows running x units of work concurrently.
     # Has the same logic as Async::Semaphore.
-    class Concurrent < Limiter
+    class Concurrent < Base
     end
   end
 end

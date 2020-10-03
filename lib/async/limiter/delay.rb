@@ -1,12 +1,12 @@
 require "async/clock"
-require_relative "../limiter"
+require_relative "base"
 
 module Async
-  class Limiter
+  module Limiter
     # Ensures units are evenly acquired during the sliding time window.
     # Example: If limit is 2 you can perform one operation every 500ms. First
     # operation at 10:10:10.000, and then another one at 10:10:10.500.
-    class Throttle < Limiter
+    class Throttle < Base
       attr_reader :window
 
       def initialize(*args, window: 1, min_limit: 0, **options)
