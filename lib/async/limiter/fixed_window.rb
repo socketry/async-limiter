@@ -23,8 +23,7 @@ module Async
       def acquire
         super
         @acquired_window_indexes.unshift(window_index)
-        # keep more entries in case a limit is increased
-        @acquired_window_indexes = @acquired_window_indexes.first(keep_limit)
+        @acquired_window_indexes = @acquired_window_indexes.first(@limit)
       end
 
       private
@@ -38,15 +37,7 @@ module Async
       end
 
       def window_index
-        (now / @window).floor
-      end
-
-      def keep_limit
-        @max_limit.infinite? ? @limit * 10 : @max_limit
-      end
-
-      def now
-        Clock.now
+        (Clock.now / @window).floor
       end
     end
   end

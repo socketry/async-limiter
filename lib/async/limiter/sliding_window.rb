@@ -22,9 +22,8 @@ module Async
 
       def acquire
         super
-        @acquired_times.unshift(now)
-        # keep more entries in case a limit is increased
-        @acquired_times = @acquired_times.first(keep_limit)
+        @acquired_times.unshift(Clock.now)
+        @acquired_times = @acquired_times.first(@limit)
       end
 
       private
@@ -38,15 +37,7 @@ module Async
       end
 
       def window_start_time
-        now - @window
-      end
-
-      def keep_limit
-        @max_limit.infinite? ? @limit * 10 : @max_limit
-      end
-
-      def now
-        Clock.now
+        Clock.now - @window
       end
     end
   end

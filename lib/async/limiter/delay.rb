@@ -22,7 +22,7 @@ module Async
 
       def acquire
         super
-        @last_acquired_time = now
+        @last_acquired_time = Clock.now
       end
 
       def delay
@@ -31,16 +31,12 @@ module Async
 
       private
 
-      def now
-        Clock.now
-      end
-
       def current_delay
         [delay - elapsed_time, 0].max
       end
 
       def elapsed_time
-        now - @last_acquired_time
+        Clock.now - @last_acquired_time
       end
     end
   end
