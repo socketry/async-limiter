@@ -1,6 +1,5 @@
-require "async/clock"
-require_relative "base"
-require_relative "burstable"
+require_relative "../sliding_window"
+require_relative "../is_continuous"
 
 module Async
   module Limiter
@@ -11,56 +10,14 @@ module Async
     # lock(s) were not released.
     class SlidingWindow
       class Continuous < SlidingWindow
-
-        attr_reader :window
-
-        def blocking?
-          window_limited?
-        end
-
-        def release
-          @count -= 1
-        end
+        include IsContinuous
 
         private
 
-        def wait
-          fiber = Fiber.current
-
-          # waiting? prevents resumed fibers from slipping in operations
-          # before other waiting fibers got resumed.
-          if blocking? || waiting?
-            @waiting << fiber
-            @scheduler_task ||= schedule
-            loop do
-              Task.yield
-              break unless blocking?
-            end
-          end
-        rescue Exception # rubocop:disable Lint/RescueException
-          @waiting.delete(fiber)
-          raise
+        def next_window_start_time
+          first_time_in_limit_scope + @window
         end
-
-        def waiting?
-          @waiting.any?
-        end
-
-        def schedule(parent: @parent || Task.current)
-          parent.async do |task|
-            while waiting?
-              delay = self.delay
-              task.sleep(delay) if delay.positive?
-              resume_waiting
-            end
-            @scheduler_task = nil
-          end
-        end
-
-        def delay
-          next_window_start_time = first_time_in_limit_scope + @window
-          [next_window_start_time - Current.now, 0].max
-        end
+        alias_method :next_acquire_time, :next_window_start_time
       end
     end
   end
