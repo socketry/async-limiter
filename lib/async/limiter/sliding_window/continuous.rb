@@ -10,27 +10,12 @@ module Async
     # starts at 10:10:11.999 you can acquire another N locks, even if previous
     # lock(s) were not released.
     class SlidingWindow
-      class Continuous < Base
+      class Continuous < SlidingWindow
 
         attr_reader :window
 
-        def initialize(*args, window: 1, **options)
-          super(*args, **options)
-
-          @window = window
-          @acquired_times = []
-        end
-
         def blocking?
           window_limited?
-        end
-
-        def acquire
-          wait
-          @count += 1
-
-          @acquired_times.unshift(Clock.now)
-          @acquired_times = @acquired_times.first(@limit)
         end
 
         def release
@@ -38,18 +23,6 @@ module Async
         end
 
         private
-
-        def window_limited?
-          first_time_in_limit_scope >= window_start_time
-        end
-
-        def first_time_in_limit_scope
-          @acquired_times.fetch(@limit - 1, NULL_TIME)
-        end
-
-        def window_start_time
-          Clock.now - @window
-        end
 
         def wait
           fiber = Fiber.current
@@ -87,12 +60,6 @@ module Async
         def delay
           next_window_start_time = first_time_in_limit_scope + @window
           [next_window_start_time - Current.now, 0].max
-        end
-
-        def resume_waiting
-          while !blocking? && (fiber = @waiting.shift)
-            fiber.resume if fiber.alive?
-          end
         end
       end
     end

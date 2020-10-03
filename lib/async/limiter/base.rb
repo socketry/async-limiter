@@ -48,9 +48,7 @@ module Async
       def release
         @count -= 1
 
-        while under_limit? && (fiber = @waiting.shift)
-          fiber.resume if fiber.alive?
-        end
+        resume_waiting
       end
 
       def increase_limit(number = 1)
@@ -69,14 +67,6 @@ module Async
 
       private
 
-      def under_limit?
-        available_units.positive?
-      end
-
-      def available_units
-        @limit - @count
-      end
-
       def wait
         fiber = Fiber.current
 
@@ -87,6 +77,12 @@ module Async
       rescue Exception # rubocop:disable Lint/RescueException
         @waiting.delete(fiber)
         raise
+      end
+
+      def resume_waiting
+        while !blocking? && (fiber = @waiting.shift)
+          fiber.resume if fiber.alive?
+        end
       end
 
       def validate!
