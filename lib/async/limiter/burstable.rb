@@ -12,7 +12,11 @@ module Async
       end
 
       def blocking?
-        super && window_frame_blocking?
+        if @burstable
+          window_blocking?
+        else
+          window_frame_blocking?
+        end
       end
 
       def acquire
@@ -24,7 +28,7 @@ module Async
       private
 
       def window_frame_blocking?
-        @burstable || next_window_frame_start_time > Clock.now
+        next_window_frame_start_time > Clock.now
       end
 
       def next_window_frame_start_time

@@ -20,7 +20,7 @@ module Async
       end
 
       def blocking?
-        super && window_blocking?
+        window_blocking?
       end
 
       def acquire
