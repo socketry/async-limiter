@@ -1,6 +1,6 @@
 require "async/clock"
 require_relative "base"
-require_relative "burstable"
+require_relative "window_options"
 
 module Async
   module Limiter
@@ -8,7 +8,7 @@ module Async
     # Example: You can perform N operations at 10:10:10.999 but can't perform
     # another N operations until 10:10:11.999.
     class SlidingWindow < Base
-      include Burstable
+      include WindowOptions
 
       attr_reader :window
 
@@ -20,7 +20,7 @@ module Async
       end
 
       def blocking?
-        window_blocking?
+        super || window_blocking?
       end
 
       def acquire
@@ -33,15 +33,15 @@ module Async
       private
 
       def window_blocking?
-        first_time_in_limit_scope >= window_start_time
+        next_window_start_time > Clock.now
+      end
+
+      def next_window_start_time
+        first_time_in_limit_scope + @window
       end
 
       def first_time_in_limit_scope
         @acquired_times.fetch(@limit - 1, NULL_TIME)
-      end
-
-      def window_start_time
-        Clock.now - @window
       end
     end
   end

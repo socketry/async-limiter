@@ -1,6 +1,6 @@
 require "async/clock"
 require_relative "base"
-require_relative "burstable"
+require_relative "window_options"
 
 module Async
   module Limiter
@@ -21,7 +21,7 @@ module Async
       end
 
       def blocking?
-        window_blocking?
+        super || window_blocking?
       end
 
       def acquire
@@ -43,6 +43,10 @@ module Async
 
       def window_index
         (Clock.now / @window).floor
+      end
+
+      def next_window_start_time
+        window_index.next * @window
       end
     end
   end
