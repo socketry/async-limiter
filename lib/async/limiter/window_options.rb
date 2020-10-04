@@ -35,13 +35,7 @@ module Async
         end
       end
 
-      def increase_limit(...)
-        super(...).tap do
-          adjust_limit
-        end
-      end
-
-      def decrease_limit(...)
+      def limit=(...)
         super(...).tap do
           adjust_limit
         end

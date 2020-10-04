@@ -17,6 +17,7 @@ module Async
 
         @window = window
         @acquired_times = []
+
         adjust_limit
       end
 

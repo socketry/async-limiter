@@ -53,16 +53,9 @@ module Async
         resume_waiting
       end
 
-      def increase_limit(number = 1)
+      def limit=(number)
         new_limit = @limit + number
-        return false if new_limit > @max_limit
-
-        @limit = new_limit
-      end
-
-      def decrease_limit(number = 1)
-        new_limit = @limit - number
-        return false if new_limit < @min_limit
+        return false unless new_limit.between(@min_limit, @max_limit)
 
         @limit = new_limit
       end
