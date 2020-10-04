@@ -7,7 +7,7 @@ module Async
       ArgumentError = Class.new(Error)
 
       MAX_LIMIT = Float::INFINITY
-      MIN_LIMIT = Float::MIN
+      MIN_WINDOW_LIMIT = Float::MIN
 
       attr_reader :count
 
@@ -15,8 +15,7 @@ module Async
 
       attr_reader :waiting
 
-      def initialize(limit = 1, parent: nil,
-        max_limit: MAX_LIMIT, min_limit: MIN_LIMIT)
+      def initialize(limit = 1, parent: nil, max_limit: MAX_LIMIT, min_limit: 1)
         @count = 0
         @limit = limit
         @waiting = []

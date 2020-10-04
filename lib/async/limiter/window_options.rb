@@ -35,7 +35,43 @@ module Async
         end
       end
 
+      def increase_limit(...)
+        super(...).tap do
+          adjust_limit
+        end
+      end
+
+      def decrease_limit(...)
+        super(...).tap do
+          adjust_limit
+        end
+      end
+
       private
+
+      # If @limit is a decimal number make it a whole number and adjust @window.
+      def adjust_limit
+        return if @limit.infinite?
+        return if (@limit % 1).zero?
+
+        case @limit
+        when 0...1
+          @window *= 1 / @limit
+          @limit = 1
+        when 1..
+          if @window >= 2
+            @window *= @limit.floor / @limit
+            @limit = @limit.floor
+          else
+            @window *= @limit.ceil / @limit
+            @limit = @limit.ceil
+          end
+        else
+          raise "invalid limit #{@limit}"
+        end
+
+        window_updated
+      end
 
       def window_frame_blocking?
         next_window_frame_start_time > Clock.now
@@ -52,6 +88,10 @@ module Async
         else
           next_window_frame_start_time
         end
+      end
+
+      def window_updated
+        raise NotImplementedError
       end
     end
   end

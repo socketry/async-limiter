@@ -12,11 +12,12 @@ module Async
 
       attr_reader :window
 
-      def initialize(*args, window: 1, **options)
-        super(*args, **options)
+      def initialize(*args, window: 1, min_limit: MIN_WINDOW_LIMIT, **options)
+        super(*args, min_limit: min_limit, **options)
 
         @window = window
         @acquired_times = []
+        adjust_limit
       end
 
       def blocking?
@@ -42,6 +43,9 @@ module Async
 
       def first_time_in_limit_scope
         @acquired_times.fetch(@limit - 1, NULL_TIME)
+      end
+
+      def window_updated
       end
     end
   end
