@@ -2,7 +2,7 @@ module Async
   module Limiter
     module IsContinuous
       def blocking?
-        window_limited? || window_frame_limited?
+        window_blocking? || window_frame_blocking?
       end
 
       def release

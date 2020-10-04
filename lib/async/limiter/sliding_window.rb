@@ -20,7 +20,7 @@ module Async
       end
 
       def blocking?
-        super && window_limited?
+        super && window_blocking?
       end
 
       def acquire
@@ -32,7 +32,7 @@ module Async
 
       private
 
-      def window_limited?
+      def window_blocking?
         first_time_in_limit_scope >= window_start_time
       end
 

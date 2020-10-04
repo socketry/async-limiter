@@ -21,18 +21,19 @@ module Async
       end
 
       def blocking?
-        super && window_limited?
+        super && window_blocking?
       end
 
       def acquire
         super
+
         @acquired_window_indexes.unshift(window_index)
         @acquired_window_indexes = @acquired_window_indexes.first(@limit)
       end
 
       private
 
-      def window_limited?
+      def window_blocking?
         first_index_in_limit_scope == window_index
       end
 

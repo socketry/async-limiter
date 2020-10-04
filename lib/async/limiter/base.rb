@@ -31,7 +31,7 @@ module Async
       end
 
       def blocking?
-        @count >= @limit
+        limit_blocking?
       end
 
       def async(parent: (@parent || Task.current), **options)
@@ -69,6 +69,10 @@ module Async
       end
 
       private
+
+      def limit_blocking?
+        @count >= @limit
+      end
 
       def wait
         fiber = Fiber.current

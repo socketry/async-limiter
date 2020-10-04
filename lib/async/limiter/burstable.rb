@@ -12,7 +12,7 @@ module Async
       end
 
       def blocking?
-        super && window_frame_limited?
+        super && window_frame_blocking?
       end
 
       def acquire
@@ -23,7 +23,7 @@ module Async
 
       private
 
-      def window_frame_limited?
+      def window_frame_blocking?
         @burstable || next_window_frame_start_time > Clock.now
       end
 
