@@ -5,6 +5,5 @@ require_relative "limiter/sliding_window"
 
 module Async
   module Limiter
-    NULL_TIME = -1
   end
 end

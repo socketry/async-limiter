@@ -1,14 +1,9 @@
 require "async/task"
+require_relative "constants"
 
 module Async
   module Limiter
     class Base
-      Error = Class.new(StandardError)
-      ArgumentError = Class.new(Error)
-
-      MAX_LIMIT = Float::INFINITY
-      MIN_WINDOW_LIMIT = Float::MIN
-
       attr_reader :count
 
       attr_reader :limit
