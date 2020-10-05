@@ -18,7 +18,8 @@ RSpec.describe Async::Limiter::FixedWindow do
 
     describe "#async" do
       subject(:limiter) do
-        described_class.new(limit,
+        described_class.new(
+          limit,
           burstable: burstable,
           release_required: release_required
         )
@@ -177,7 +178,8 @@ RSpec.describe Async::Limiter::FixedWindow do
 
     describe "#limit=" do
       subject(:limiter) do
-        described_class.new(3,
+        described_class.new(
+          3,
           burstable: burstable,
           release_required: release_required,
           max_limit: 10,
@@ -221,20 +223,18 @@ RSpec.describe Async::Limiter::FixedWindow do
         end
 
         it "is blocking when a lock is released in the same window" do
-          begin
-            start_window = Async::Clock.now.to_i
-            limiter.acquire
-            expect(limiter).to be_blocking
+          start_window = Async::Clock.now.to_i
+          limiter.acquire
+          expect(limiter).to be_blocking
 
-            limiter.release
-            current_window = Async::Clock.now.to_i
-            raise "time window changed" unless current_window == start_window
-            # We're still in the same time window
-            expect(limiter).to be_blocking
-          rescue RuntimeError
-            # This prevents intermittent spec failures.
-            retry
-          end
+          limiter.release
+          current_window = Async::Clock.now.to_i
+          raise "time window changed" unless current_window == start_window
+          # We're still in the same time window
+          expect(limiter).to be_blocking
+        rescue RuntimeError
+          # This prevents intermittent spec failures.
+          retry
         end
 
         it "is blocking when a lock is not released in the next window" do
@@ -250,7 +250,8 @@ RSpec.describe Async::Limiter::FixedWindow do
 
       context "when limit is 2" do
         subject(:limiter) do
-          described_class.new(2,
+          described_class.new(
+            2,
             burstable: burstable,
             release_required: release_required
           )

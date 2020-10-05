@@ -85,7 +85,7 @@ module Async
       # Schedule resuming waiting tasks.
       def schedule(parent: @parent || Task.current)
         @scheduler_task ||=
-          parent.async do |task|
+          parent.async { |task|
             while @waiting.any? && !(@release_required && limit_blocking?)
               delay = delay(next_acquire_time)
               task.sleep(delay) if delay.positive?
@@ -93,7 +93,7 @@ module Async
             end
 
             @scheduler_task = nil
-          end
+          }
       end
 
       def delay(time)

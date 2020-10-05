@@ -18,7 +18,8 @@ RSpec.describe Async::Limiter::FixedWindow do
 
     describe "#async" do
       subject(:limiter) do
-        described_class.new(limit,
+        described_class.new(
+          limit,
           burstable: burstable,
           release_required: release_required
         )
@@ -127,19 +128,15 @@ RSpec.describe Async::Limiter::FixedWindow do
               ["task 0 start", 0],
               ["task 1 start", be_within(50).of(333)],
               ["task 2 start", be_within(50).of(666)],
-
-              ["task 0 end",   be_within(50).of(1500)], # resumes task 3
+              ["task 0 end", be_within(50).of(1500)], # resumes task 3
               ["task 3 start", be_within(50).of(1500)],
-
-              ["task 1 end",   be_within(50).of(1833)], # resumes task 4
+              ["task 1 end", be_within(50).of(1833)], # resumes task 4
               ["task 4 start", be_within(50).of(1833)],
-
-              ["task 2 end",   be_within(50).of(2166)], # resumes task 5
+              ["task 2 end", be_within(50).of(2166)], # resumes task 5
               ["task 5 start", be_within(50).of(2166)],
-
-              ["task 3 end",   be_within(50).of(3000)],
-              ["task 4 end",   be_within(50).of(3333)],
-              ["task 5 end",   be_within(50).of(3666)]
+              ["task 3 end", be_within(50).of(3000)],
+              ["task 4 end", be_within(50).of(3333)],
+              ["task 5 end", be_within(50).of(3666)]
             )
           end
         end
@@ -150,14 +147,16 @@ RSpec.describe Async::Limiter::FixedWindow do
       context "when limit is invalid" do
         it "raises an error" do
           expect {
-            described_class.new(0,
+            described_class.new(
+              0,
               burstable: burstable,
               release_required: release_required
             )
           }.to raise_error(Async::Limiter::ArgumentError)
 
           expect {
-            described_class.new(-1,
+            described_class.new(
+              -1,
               burstable: burstable,
               release_required: release_required
             )
@@ -205,7 +204,8 @@ RSpec.describe Async::Limiter::FixedWindow do
       context "when limit is lower than min_limit" do
         it "raises an error" do
           expect {
-            described_class.new(1,
+            described_class.new(
+              1,
               min_limit: 10,
               burstable: burstable,
               release_required: release_required
@@ -241,7 +241,8 @@ RSpec.describe Async::Limiter::FixedWindow do
 
     describe "#limit=" do
       subject(:limiter) do
-        described_class.new(3,
+        described_class.new(
+          3,
           burstable: burstable,
           release_required: release_required,
           max_limit: 10,
@@ -285,20 +286,18 @@ RSpec.describe Async::Limiter::FixedWindow do
         end
 
         it "is blocking when a lock is released in the same window" do
-          begin
-            start_window = Async::Clock.now.to_i
-            limiter.acquire
-            expect(limiter).to be_blocking
+          start_window = Async::Clock.now.to_i
+          limiter.acquire
+          expect(limiter).to be_blocking
 
-            limiter.release
-            current_window = Async::Clock.now.to_i
-            raise "time window changed" unless current_window == start_window
-            # We're still in the same time window
-            expect(limiter).to be_blocking
-          rescue RuntimeError
-            # This prevents intermittent spec failures.
-            retry
-          end
+          limiter.release
+          current_window = Async::Clock.now.to_i
+          raise "time window changed" unless current_window == start_window
+          # We're still in the same time window
+          expect(limiter).to be_blocking
+        rescue RuntimeError
+          # This prevents intermittent spec failures.
+          retry
         end
 
         it "is blocking when a lock is not released in the next window" do
@@ -314,7 +313,8 @@ RSpec.describe Async::Limiter::FixedWindow do
 
       context "when limit is 2" do
         subject(:limiter) do
-          described_class.new(2,
+          described_class.new(
+            2,
             burstable: burstable,
             release_required: release_required
           )
