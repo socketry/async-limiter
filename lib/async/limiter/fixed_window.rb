@@ -18,7 +18,10 @@ module Async
         super(*args, min_limit: min_limit, **options)
 
         @window = window
+        @acquired_times = []
         @acquired_window_indexes = []
+
+        @scheduled = true
         adjust_limit
       end
 

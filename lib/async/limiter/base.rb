@@ -95,7 +95,7 @@ module Async
       end
 
       def delay(time)
-        [time - Current.now, 0].max
+        [time - Async::Clock.now, 0].max
       end
 
       def next_acquire_time

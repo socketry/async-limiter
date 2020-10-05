@@ -12,7 +12,6 @@ module Async
         @release_required = release_required
 
         @last_acquired_time = NULL_TIME
-        @scheduled = !@burstable || !@release_required
       end
 
       def blocking?
