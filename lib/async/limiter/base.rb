@@ -86,20 +86,14 @@ module Async
       def schedule(parent: @parent || Task.current)
         @scheduler_task ||=
           parent.async do |task|
-            loop do
-              while @waiting.any? && !(@release_required && limit_blocking?)
-                delay = delay(next_acquire_time)
-                task.sleep(delay) if delay.positive?
-                resume_waiting
-              end
-
-              @scheduler_paused = true
-              Task.yield
-              @scheduler_paused = false
+            while @waiting.any? && !(@release_required && limit_blocking?)
+              delay = delay(next_acquire_time)
+              task.sleep(delay) if delay.positive?
+              resume_waiting
             end
-          end
 
-        @scheduler_task.fiber.resume if @scheduler_paused
+            @scheduler_task = nil
+          end
       end
 
       def delay(time)
