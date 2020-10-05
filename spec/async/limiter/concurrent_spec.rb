@@ -1,8 +1,6 @@
 require "async/barrier"
 require "async/limiter/concurrent"
 
-require_relative "chainable_async_examples"
-
 # These specs were taken from https://github.com/socketry/async and appropriated
 
 RSpec.describe Async::Limiter::Concurrent do

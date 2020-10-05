@@ -1,8 +1,6 @@
 require "async/barrier"
 require "async/limiter/fixed_window"
 
-require_relative "../chainable_async_examples"
-
 RSpec.describe Async::Limiter::FixedWindow do
   describe "burstable, release required" do
     let(:burstable) { true }
