@@ -44,12 +44,11 @@ RSpec.describe Async::Limiter::Concurrent do
       end
     end
 
-    context "when limit is 1" do
+    context "when tasks run one at a time" do
       let(:limit) { 1 }
+      let(:order) { [] }
 
-      it "allows only one task at a time" do
-        order = []
-
+      before do
         3.times.map { |i|
           limiter.async do |task|
             order << i
@@ -57,17 +56,18 @@ RSpec.describe Async::Limiter::Concurrent do
             order << i
           end
         }.map(&:wait)
+      end
 
-        expect(order).to be == [0, 0, 1, 1, 2, 2]
+      it "the tasks are executed sequentially" do
+        expect(order).to eq [0, 0, 1, 1, 2, 2]
       end
     end
 
-    context "when limit is 3" do
+    context "when tasks are executed concurrently" do
       let(:limit) { 3 }
+      let(:order) { [] }
 
-      it "allows tasks to execute concurrently" do
-        order = []
-
+      before do
         3.times.map { |i|
           limiter.async do |task|
             order << i
@@ -75,30 +75,62 @@ RSpec.describe Async::Limiter::Concurrent do
             order << i
           end
         }.map(&:wait)
+      end
 
-        expect(order).to be == [0, 1, 2, 0, 1, 2]
+      it "the order of tasks is intermingled" do
+        expect(order).to eq [0, 1, 2, 0, 1, 2]
       end
     end
   end
 
-  # TODO: remove
-  xdescribe "#waiting" do
-    subject { described_class.new(0) }
+  describe "invalid inputs" do
+    context "when limit is invalid" do
+      it "raises an error" do
+        expect {
+          described_class.new(0)
+        }.to raise_error(Async::Limiter::ArgumentError)
 
-    it "handles exceptions thrown while waiting" do
-      expect do
-        reactor.with_timeout(0.1) do
-          subject.acquire do
-          end
-        end
-      end.to raise_error(Async::TimeoutError)
+        expect {
+          described_class.new(-1)
+        }.to raise_error(Async::Limiter::ArgumentError)
+      end
+    end
 
-      expect(subject.waiting).to be_empty
+    context "when min_limit is invalid" do
+      it "raises an error" do
+        expect {
+          described_class.new(min_limit: -1)
+        }.to raise_error(Async::Limiter::ArgumentError)
+      end
+    end
+
+    context "when max_limit is invalid" do
+      it "raises an error" do
+        expect {
+          described_class.new(max_limit: -1)
+        }.to raise_error(Async::Limiter::ArgumentError)
+      end
+    end
+
+    context "when max_limit is lower than min_limit" do
+      it "raises an error" do
+        expect {
+          described_class.new(max_limit: 5, min_limit: 10)
+        }.to raise_error(Async::Limiter::ArgumentError)
+      end
+    end
+
+    context "when limit is lower than min_limit" do
+      it "raises an error" do
+        expect {
+          described_class.new(1, min_limit: 10)
+        }.to raise_error(Async::Limiter::ArgumentError)
+      end
     end
   end
 
   describe "#count" do
-    it "counts the number of current locks" do
+    it "counts the number of acquired locks" do
       expect(limiter.count).to eq 0
 
       limiter.acquire
@@ -107,17 +139,42 @@ RSpec.describe Async::Limiter::Concurrent do
   end
 
   describe "#limit" do
-    it "has a default limit" do
-      expect(limiter.limit).to eq 1
+    context "with a default value" do
+      specify do
+        expect(limiter.limit).to eq 1
+      end
+    end
+
+    context "when limit is incremented" do
+      specify do
+        limiter.limit += 1
+        expect(limiter.limit).to eq 2
+      end
     end
   end
 
   describe "#blocking?" do
-    it "will be blocking when acquired" do
-      expect(limiter).not_to be_blocking
+    context "with a default limiter" do
+      it "is blocking when a single lock is acquired" do
+        expect(limiter).not_to be_blocking
 
-      limiter.acquire
-      expect(limiter).to be_blocking
+        limiter.acquire
+        expect(limiter).to be_blocking
+      end
+    end
+
+    context "when limit is 2" do
+      subject(:limiter) { described_class.new(2) }
+
+      it "is blocking when 2 locks are acquired" do
+        expect(limiter).not_to be_blocking
+
+        limiter.acquire
+        expect(limiter).not_to be_blocking
+
+        limiter.acquire
+        expect(limiter).to be_blocking
+      end
     end
   end
 

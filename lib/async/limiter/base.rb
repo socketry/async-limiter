@@ -48,9 +48,8 @@ module Async
         resume_waiting
       end
 
-      def limit=(number)
-        new_limit = @limit + number
-        return false unless new_limit.between(@min_limit, @max_limit)
+      def limit=(new_limit)
+        return false unless new_limit.between?(@min_limit, @max_limit)
 
         @limit = new_limit
       end
