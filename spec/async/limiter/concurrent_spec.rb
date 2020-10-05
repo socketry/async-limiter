@@ -153,6 +153,35 @@ RSpec.describe Async::Limiter::Concurrent do
     end
   end
 
+  describe "#limit=" do
+    subject(:limiter) { described_class.new(3, max_limit: 10, min_limit: 2) }
+
+    before do
+      expect(limiter.limit).to eq 3
+    end
+
+    context "when new limit is within max and min limits" do
+      it "updates limit" do
+        limiter.limit = 5
+        expect(limiter.limit).to eq 5
+      end
+    end
+
+    context "when new limit is greater than max_limit" do
+      it "updates limit to max_limit" do
+        limiter.limit = 50
+        expect(limiter.limit).to eq 10
+      end
+    end
+
+    context "when new limit is lower than min_limit" do
+      it "updates limit to min_limit" do
+        limiter.limit = 1
+        expect(limiter.limit).to eq 2
+      end
+    end
+  end
+
   describe "#blocking?" do
     context "with a default limiter" do
       it "is blocking when a single lock is acquired" do
