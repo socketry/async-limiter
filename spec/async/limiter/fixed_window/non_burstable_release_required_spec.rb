@@ -87,6 +87,7 @@ RSpec.describe Async::Limiter::FixedWindow do
 
       context "when limit is 3" do
         let(:limit) { 3 } # window_frame is 1.0 / 3 = 0.33
+        let(:order) { [] }
         let(:task_stats) { [] }
 
         before do
@@ -98,7 +99,9 @@ RSpec.describe Async::Limiter::FixedWindow do
                 ((Async::Clock.now - start_time) * 1000).to_i # ms
               ]
 
+              order << i
               task.sleep(task_duration)
+              order << i
 
               task_stats << [
                 "task #{i} end",
@@ -112,7 +115,7 @@ RSpec.describe Async::Limiter::FixedWindow do
           let(:task_duration) { 0.1 }
 
           it "executes the tasks sequentially" do
-            expect(task_order).to eq [0, 0, 1, 1, 2, 2]
+            expect(order).to eq [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]
           end
         end
 
@@ -317,10 +320,13 @@ RSpec.describe Async::Limiter::FixedWindow do
           )
         end
 
-        it "is blocking when 2 locks are acquired" do
+        it "is blocking for the window_frame duration after #acquire" do
           expect(limiter).not_to be_blocking
 
           limiter.acquire
+          expect(limiter).to be_blocking
+
+          Async::Task.current.sleep(0.5) # window frame duration
           expect(limiter).not_to be_blocking
 
           limiter.acquire
