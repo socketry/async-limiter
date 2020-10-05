@@ -71,7 +71,7 @@ module Async
         # slipping in operations before other waiting fibers get resumed.
         if blocking? || (@scheduled && @waiting.any?)
           @waiting << fiber
-          @scheduler_task ||= schedule if @scheduled
+          schedule if schedule?
           loop do
             Task.yield # run this line at least once
             break unless blocking?
@@ -82,16 +82,24 @@ module Async
         raise
       end
 
-      # Schedules resuming waiting tasks.
+      # Schedule resuming waiting tasks.
       def schedule(parent: @parent || Task.current)
-        parent.async do |task|
-          while @waiting.any?
-            delay = delay(next_acquire_time)
-            task.sleep(delay) if delay.positive?
-            resume_waiting
+        @scheduler_task ||=
+          parent.async do |task|
+            loop do
+              while @waiting.any? && !(@release_required && limit_blocking?)
+                delay = delay(next_acquire_time)
+                task.sleep(delay) if delay.positive?
+                resume_waiting
+              end
+
+              @scheduler_paused = true
+              Task.yield
+              @scheduler_paused = false
+            end
           end
-          @scheduler_task = nil
-        end
+
+        @scheduler_task.fiber.resume if @scheduler_paused
       end
 
       def delay(time)
@@ -106,6 +114,17 @@ module Async
         while !blocking? && (fiber = @waiting.shift)
           fiber.resume if fiber.alive?
         end
+
+        # Long running non-burstable tasks may end while
+        # #window_frame_blocking?. Start a scheduler if one is not running.
+        schedule if schedule?
+      end
+
+      def schedule?
+        @scheduled &&
+          @scheduler_task.nil? &&
+          @waiting.any? &&
+          !(@release_required && limit_blocking?)
       end
 
       def validate!

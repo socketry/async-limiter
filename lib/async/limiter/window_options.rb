@@ -26,12 +26,10 @@ module Async
       end
 
       def release
-        if @release_required
-          # We're resuming waiting fibers when lock is released.
-          super
-        else
-          @count -= 1
-        end
+        @count -= 1
+
+        # We're resuming waiting fibers when lock is released.
+        resume_waiting if @release_required
       end
 
       def limit=(...)
