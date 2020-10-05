@@ -24,4 +24,3 @@ RSpec.shared_examples :chainable_async do
     end
   end
 end
-

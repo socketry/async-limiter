@@ -49,9 +49,13 @@ module Async
       end
 
       def limit=(new_limit)
-        return false unless new_limit.between?(@min_limit, @max_limit)
-
-        @limit = new_limit
+        @limit = if new_limit > @max_limit
+          @max_limit
+        elsif new_limit < @min_limit
+          @min_limit
+        else
+          new_limit
+        end
       end
 
       private
@@ -70,7 +74,7 @@ module Async
           @scheduler_task ||= schedule if @scheduled
           loop do
             Task.yield # run this line at least once
-            break if !blocking?
+            break unless blocking?
           end
         end
       rescue Exception # rubocop:disable Lint/RescueException
