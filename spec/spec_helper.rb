@@ -1,3 +1,5 @@
+require "async/rspec"
+
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|
     # will be the default in rspec 4
@@ -18,4 +20,6 @@ RSpec.configure do |config|
   end
   config.order = :random
   Kernel.srand config.seed
+
+  config.include_context Async::RSpec::Reactor
 end

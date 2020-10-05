@@ -1,5 +1,4 @@
 require "async/barrier"
-require "async/rspec"
 require "async/limiter/concurrent"
 
 require_relative "chainable_async_examples"
@@ -7,8 +6,6 @@ require_relative "chainable_async_examples"
 # These specs were taken from https://github.com/socketry/async and appropriated
 
 RSpec.describe Async::Limiter::Concurrent do
-  include_context Async::RSpec::Reactor
-
   it_behaves_like :chainable_async
 
   subject(:limiter) { described_class.new }
