@@ -1,7 +1,7 @@
 require "async/barrier"
 require "async/limiter/fixed_window"
 
-require_relative "chainable_async_examples"
+require_relative "../chainable_async_examples"
 
 RSpec.describe Async::Limiter::FixedWindow do
   it_behaves_like :chainable_async
@@ -215,6 +215,16 @@ RSpec.describe Async::Limiter::FixedWindow do
           # This prevents intermittent spec failures.
           retry
         end
+      end
+
+      it "is blocking when a lock is not released in the next window" do
+        limiter.acquire
+        expect(limiter).to be_blocking
+
+        Async::Task.current.sleep(limiter.window + 0.01)
+        expect(limiter).to be_blocking
+        limiter.release
+        expect(limiter).not_to be_blocking
       end
     end
 
