@@ -88,7 +88,6 @@ RSpec.describe Async::Limiter::FixedWindow do
 
       context "when limit is 3" do
         let(:limit) { 3 } # window_frame is 1.0 / 3 = 0.33
-        let(:order) { [] }
         let(:task_stats) { [] }
 
         before do
@@ -102,9 +101,7 @@ RSpec.describe Async::Limiter::FixedWindow do
                 ((Async::Clock.now - start_time) * 1000).to_i # ms
               ]
 
-              order << i
               task.sleep(task_duration)
-              order << i
 
               task_stats << [
                 "task #{i} end",
@@ -118,13 +115,27 @@ RSpec.describe Async::Limiter::FixedWindow do
           let(:task_duration) { 0.1 }
 
           it "executes the tasks sequentially" do
-            expect(order).to eq [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]
+            expect(task_stats).to contain_exactly(
+              ["task 0 start", 0],
+              ["task 0 end", be_within(50).of(100)],
+              ["task 1 start", be_within(50).of(333)],
+              ["task 1 end", be_within(50).of(433)],
+              ["task 2 start", be_within(50).of(666)],
+              ["task 2 end", be_within(50).of(766)],
+              ["task 3 start", be_within(50).of(1000)],
+              ["task 3 end", be_within(50).of(1100)],
+              ["task 4 start", be_within(50).of(1333)],
+              ["task 4 end", be_within(50).of(1433)],
+              ["task 5 start", be_within(50).of(1666)],
+              ["task 5 end", be_within(50).of(1766)]
+            )
           end
         end
 
         context "when task duration is longer than window frame" do
           let(:task_duration) { 1.5 }
 
+          # spec with intermittent failures
           it "intermingles task execution" do
             expect(task_stats).to contain_exactly(
               ["task 0 start", 0],
