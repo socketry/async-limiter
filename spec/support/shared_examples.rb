@@ -230,13 +230,7 @@ RSpec.shared_context :async_processing do
   end
   let(:task_stats) { [] }
 
-  def maximum
-    @maximum
-  end
-
-  def maximum=(value)
-    @maximum = value
-  end
+  attr_accessor :maximum
 
   let(:result) do
     current = 0
@@ -310,7 +304,7 @@ RSpec.shared_context :blocking_contexts do
   shared_context :no_locks_are_released_until_next_window do
     before do
       limit.times { limiter.acquire }
-      wait_until_next_fixed_window_start
+      wait_until_next_window
     end
   end
 end
