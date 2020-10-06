@@ -23,71 +23,56 @@ RSpec.describe Async::Limiter::Concurrent do
   include_examples :count
 
   describe "#async" do
-    subject(:limiter) { described_class.new(limit) }
+    include_context :async_processing
 
     context "when processing work in batches" do
-      let(:repeats) { 40 }
       let(:limit) { 4 }
+      let(:repeats) { 40 }
 
-      before do
-        current, @maximum = 0, 0
-
-        @result = repeats.times.map { |i|
-          limiter.async do |task|
-            current += 1
-            @maximum = [current, @maximum].max
-            task.sleep(rand * 0.1)
-            current -= 1
-
-            i
-          end
-        }.map(&:wait)
+      def task_duration
+        rand * 0.1
       end
 
       it "checks max number of concurrent task equals the limit" do
-        expect(@maximum).to eq limit
+        expect(maximum).to eq limit
       end
 
       it "checks the results are in the correct order" do
-        expect(@result).to eq (0...repeats).to_a
+        expect(result).to eq (0...repeats).to_a
       end
     end
 
     context "when tasks run one at a time" do
       let(:limit) { 1 }
-      let(:order) { [] }
-
-      before do
-        3.times.map { |i|
-          limiter.async do |task|
-            order << i
-            task.sleep(0.1)
-            order << i
-          end
-        }.map(&:wait)
-      end
+      let(:repeats) { 3 }
+      let(:task_duration) { 0.1 }
 
       it "the tasks are executed sequentially" do
-        expect(order).to eq [0, 0, 1, 1, 2, 2]
+        expect(task_stats).to contain_exactly(
+          ["task 0 start", 0],
+          ["task 0 end", be_within(50).of(100)],
+          ["task 1 start", be_within(50).of(100)],
+          ["task 1 end", be_within(50).of(200)],
+          ["task 2 start", be_within(50).of(200)],
+          ["task 2 end", be_within(50).of(300)]
+        )
       end
     end
 
     context "when tasks are executed concurrently" do
       let(:limit) { 3 }
-      let(:order) { [] }
-
-      before do
-        3.times.map { |i|
-          limiter.async do |task|
-            order << i
-            task.sleep(0.1)
-            order << i
-          end
-        }.map(&:wait)
-      end
+      let(:repeats) { 3 }
+      let(:task_duration) { 0.1 }
 
       it "the order of tasks is intermingled" do
-        expect(order).to eq [0, 1, 2, 0, 1, 2]
+        expect(task_stats).to contain_exactly(
+          ["task 0 start", 0],
+          ["task 0 end", be_within(50).of(100)],
+          ["task 1 start", 0],
+          ["task 1 end", be_within(50).of(100)],
+          ["task 2 start", 0],
+          ["task 2 end", be_within(50).of(100)]
+        )
       end
     end
   end

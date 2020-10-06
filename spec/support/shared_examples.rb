@@ -205,3 +205,62 @@ RSpec.shared_examples :fixed_window_limiter do
   include_examples :barrier
   include_examples :count
 end
+
+RSpec.shared_context :async_processing do
+  require "async/limiter/fixed_window"
+
+  let(:acquired_times) { [] }
+  let(:max_per_second) do
+    acquired_times.map(&:to_i).tally.values.max
+  end
+  let(:max_per_window) do
+    acquired_times.map { |time|
+      time.truncate(1)
+    }.tally.values.max
+  end
+  let(:task_stats) { [] }
+
+  def maximum
+    @maximum
+  end
+
+  def maximum=(value)
+    @maximum = value
+  end
+
+  let(:result) do
+    current = 0
+    self.maximum = 0
+
+    if described_class == Async::Limiter::FixedWindow
+      wait_until_next_fixed_window_start
+    end
+
+    start_time = Async::Clock.now
+
+    repeats.times.map { |i|
+      limiter.async do |task|
+        current += 1
+        acquired_times << Async::Clock.now
+        task_stats << [
+          "task #{i} start",
+          ((Async::Clock.now - start_time) * 1000).to_i # ms
+        ]
+        self.maximum = [current, maximum].max
+
+        task.sleep(task_duration)
+
+        current -= 1
+        task_stats << [
+          "task #{i} end",
+          ((Async::Clock.now - start_time) * 1000).to_i # ms
+        ]
+        i
+      end
+    }.map(&:wait)
+  end
+
+  before do
+    result
+  end
+end

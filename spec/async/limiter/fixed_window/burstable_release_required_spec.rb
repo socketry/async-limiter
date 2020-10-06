@@ -8,34 +8,22 @@ RSpec.describe Async::Limiter::FixedWindow do
     include_examples :fixed_window_limiter
 
     describe "#async" do
+      include_context :async_processing
+
       context "when processing work in batches" do
-        let(:repeats) { 20 }
         let(:limit) { 4 }
-        let(:acquired_times) { [] }
-        let(:max_per_second) { acquired_times.map(&:to_i).tally.values.max }
+        let(:repeats) { 20 }
 
-        before do
-          current, @maximum = 0, 0
-
-          @result = repeats.times.map { |i|
-            limiter.async do |task|
-              current += 1
-              acquired_times << Async::Clock.now
-              @maximum = [current, @maximum].max
-              task.sleep(rand * 0.1)
-              current -= 1
-
-              i
-            end
-          }.map(&:wait)
+        def task_duration
+          rand * 0.1
         end
 
-        it "checks max number of concurrent task equals the limit" do
-          expect(@maximum).to eq limit
+        it "checks max number of concurrent tasks equals the limit" do
+          expect(maximum).to eq limit
         end
 
         it "checks the results are in the correct order" do
-          expect(@result).to eq (0...repeats).to_a
+          expect(result).to eq (0...repeats).to_a
         end
 
         it "checks max number of tasks in a time window equals the limit" do
@@ -45,23 +33,18 @@ RSpec.describe Async::Limiter::FixedWindow do
 
       context "when tasks run one at a time" do
         let(:limit) { 1 }
-        let(:order) { [] }
-        let(:acquired_times) { [] }
-        let(:max_per_second) { acquired_times.map(&:to_i).tally.values.max }
-
-        before do
-          3.times.map { |i|
-            limiter.async do |task|
-              acquired_times << Async::Clock.now
-              order << i
-              task.sleep(0.1)
-              order << i
-            end
-          }.map(&:wait)
-        end
+        let(:repeats) { 3 }
+        let(:task_duration) { 0.1 }
 
         it "the tasks are executed sequentially" do
-          expect(order).to eq [0, 0, 1, 1, 2, 2]
+          expect(task_stats).to contain_exactly(
+            ["task 0 start", 0],
+            ["task 0 end", be_within(50).of(100)],
+            ["task 1 start", be_within(50).of(1000)],
+            ["task 1 end", be_within(50).of(1100)],
+            ["task 2 start", be_within(50).of(2000)],
+            ["task 2 end", be_within(50).of(2100)]
+          )
         end
 
         it "ensures max number of tasks in a time window equals the limit" do
@@ -71,20 +54,18 @@ RSpec.describe Async::Limiter::FixedWindow do
 
       context "when tasks are executed concurrently" do
         let(:limit) { 3 }
-        let(:order) { [] }
-
-        before do
-          3.times.map { |i|
-            limiter.async do |task|
-              order << i
-              task.sleep(0.1)
-              order << i
-            end
-          }.map(&:wait)
-        end
+        let(:repeats) { 3 }
+        let(:task_duration) { 0.1 }
 
         it "the order of tasks is intermingled" do
-          expect(order).to eq [0, 1, 2, 0, 1, 2]
+          expect(task_stats).to contain_exactly(
+            ["task 0 start", 0],
+            ["task 0 end", be_within(50).of(100)],
+            ["task 1 start", 0],
+            ["task 1 end", be_within(50).of(100)],
+            ["task 2 start", 0],
+            ["task 2 end", be_within(50).of(100)]
+          )
         end
       end
     end

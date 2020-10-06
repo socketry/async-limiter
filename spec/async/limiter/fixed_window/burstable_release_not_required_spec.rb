@@ -8,39 +8,20 @@ RSpec.describe Async::Limiter::FixedWindow do
     include_examples :fixed_window_limiter
 
     describe "#async" do
+      include_context :async_processing
+
       context "when processing work in batches" do
+        let(:limit) { 4 }
         let(:window) { 0.1 } # shorter window to speed the specs
         let(:repeats) { 20 }
-        let(:limit) { 4 }
-        let(:acquired_times) { [] }
-        let(:max_per_window) do
-          acquired_times.map { |time|
-            time.truncate(1)
-          }.tally.values.max
-        end
-
-        before do
-          current, @maximum = 0, 0
-
-          @result = repeats.times.map { |i|
-            limiter.async do |task|
-              current += 1
-              acquired_times << Async::Clock.now
-              @maximum = [current, @maximum].max
-              task.sleep(0.2) # task lasts longer than a window
-              current -= 1
-
-              i
-            end
-          }.map(&:wait)
-        end
+        let(:task_duration) { 0.2 } # task lasts longer than a window
 
         it "checks max number of concurrent task exceeds the limit" do
-          expect(@maximum).to eq 3 * limit
+          expect(maximum).to eq 3 * limit
         end
 
         it "checks the results are in the correct order" do
-          expect(@result).to eq (0...repeats).to_a
+          expect(result).to eq (0...repeats).to_a
         end
 
         it "checks max number of tasks in a time window equals the limit" do
@@ -49,33 +30,9 @@ RSpec.describe Async::Limiter::FixedWindow do
       end
 
       context "when tasks run one at a time" do
-        let(:window) { 1 }
         let(:limit) { 1 }
-        let(:order) { [] }
-        let(:task_stats) { [] }
-
-        before do
-          wait_until_next_fixed_window_start
-          start_time = Async::Clock.now
-
-          6.times.map { |i|
-            limiter.async do |task|
-              task_stats << [
-                "task #{i} start",
-                ((Async::Clock.now - start_time) * 1000).to_i # ms
-              ]
-
-              order << i
-              task.sleep(task_duration)
-              order << i
-
-              task_stats << [
-                "task #{i} end",
-                ((Async::Clock.now - start_time) * 1000).to_i # ms
-              ]
-            end
-          }.map(&:wait)
-        end
+        let(:window) { 1 }
+        let(:repeats) { 6 }
 
         context "when task duration is shorter than window" do
           let(:task_duration) { 0.1 }
@@ -122,33 +79,9 @@ RSpec.describe Async::Limiter::FixedWindow do
       end
 
       context "when tasks are executed concurrently" do
-        let(:window) { 1 }
         let(:limit) { 3 }
-        let(:order) { [] }
-        let(:task_stats) { [] }
-
-        before do
-          wait_until_next_fixed_window_start
-          start_time = Async::Clock.now
-
-          6.times.map { |i|
-            limiter.async do |task|
-              task_stats << [
-                "task #{i} start",
-                ((Async::Clock.now - start_time) * 1000).to_i # ms
-              ]
-
-              order << i
-              task.sleep(task_duration)
-              order << i
-
-              task_stats << [
-                "task #{i} end",
-                ((Async::Clock.now - start_time) * 1000).to_i # ms
-              ]
-            end
-          }.map(&:wait)
-        end
+        let(:window) { 1 }
+        let(:repeats) { 6 }
 
         context "when task duration is shorter than window" do
           let(:task_duration) { 0.1 }
