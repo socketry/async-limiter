@@ -4,7 +4,6 @@ require "async/limiter/fixed_window"
 RSpec.describe Async::Limiter::FixedWindow do
   describe "burstable, release required" do
     include_context :fixed_window_limiter_helpers
-    it_behaves_like :chainable_async
 
     let(:burstable) { true }
     let(:release_required) { true }
@@ -16,7 +15,12 @@ RSpec.describe Async::Limiter::FixedWindow do
       )
     end
 
+    include_examples :chainable_async
     include_examples :invalid_inputs
+    include_examples :limit
+    include_examples :limit=
+    include_examples :barrier
+    include_examples :count
 
     describe "#async" do
       subject(:limiter) do
@@ -108,67 +112,6 @@ RSpec.describe Async::Limiter::FixedWindow do
       end
     end
 
-    describe "#count" do
-      it "counts the number of acquired locks" do
-        expect(limiter.count).to eq 0
-
-        limiter.acquire
-        expect(limiter.count).to eq 1
-      end
-    end
-
-    describe "#limit" do
-      context "with a default value" do
-        specify do
-          expect(limiter.limit).to eq 1
-        end
-      end
-
-      context "when limit is incremented" do
-        specify do
-          limiter.limit += 1
-          expect(limiter.limit).to eq 2
-        end
-      end
-    end
-
-    describe "#limit=" do
-      subject(:limiter) do
-        described_class.new(
-          3,
-          burstable: burstable,
-          release_required: release_required,
-          max_limit: 10,
-          min_limit: 2
-        )
-      end
-
-      before do
-        expect(limiter.limit).to eq 3
-      end
-
-      context "when new limit is within max and min limits" do
-        it "updates limit" do
-          limiter.limit = 5
-          expect(limiter.limit).to eq 5
-        end
-      end
-
-      context "when new limit is greater than max_limit" do
-        it "updates limit to max_limit" do
-          limiter.limit = 50
-          expect(limiter.limit).to eq 10
-        end
-      end
-
-      context "when new limit is lower than min_limit" do
-        it "updates limit to min_limit" do
-          limiter.limit = 1
-          expect(limiter.limit).to eq 2
-        end
-      end
-    end
-
     describe "#blocking?" do
       context "with a default limiter" do
         it "is blocking when a single lock is acquired" do
@@ -222,33 +165,6 @@ RSpec.describe Async::Limiter::FixedWindow do
           limiter.acquire
           expect(limiter).to be_blocking
         end
-      end
-    end
-
-    describe "#acquire/#release" do
-      it "increments count" do
-        limiter.acquire
-        expect(limiter.count).to eq 1
-
-        limiter.release
-        expect(limiter.count).to eq 0
-      end
-    end
-
-    context "with barrier" do
-      let(:capacity) { 2 }
-      let(:barrier) { Async::Barrier.new }
-      let(:repeats) { capacity * 2 }
-
-      it "executes several tasks and waits using a barrier" do
-        repeats.times do
-          subject.async(parent: barrier) do |task|
-            task.sleep 0.1
-          end
-        end
-
-        expect(barrier.size).to eq repeats
-        barrier.wait
       end
     end
   end
