@@ -172,3 +172,36 @@ RSpec.shared_examples :count do
     end
   end
 end
+
+RSpec.shared_examples :fixed_window_limiter do
+  def wait_until_next_fixed_window_start
+    window_index = (Async::Clock.now / limiter.window).floor
+    next_window_start_time = window_index.next * limiter.window
+    delay = next_window_start_time - Async::Clock.now
+
+    Async::Task.current.sleep(delay)
+  end
+
+  let(:limit) { 1 }
+  let(:window) { 1 }
+  let(:min_limit) { Async::Limiter::MIN_WINDOW_LIMIT }
+  let(:max_limit) { Async::Limiter::MAX_LIMIT }
+
+  subject(:limiter) do
+    described_class.new(
+      limit,
+      window: window,
+      min_limit: min_limit,
+      max_limit: max_limit,
+      burstable: burstable,
+      release_required: release_required
+    )
+  end
+
+  include_examples :chainable_async
+  include_examples :invalid_inputs
+  include_examples :limit
+  include_examples :limit=
+  include_examples :barrier
+  include_examples :count
+end

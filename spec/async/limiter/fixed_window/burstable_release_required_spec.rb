@@ -2,32 +2,10 @@ require "async/limiter/fixed_window"
 
 RSpec.describe Async::Limiter::FixedWindow do
   describe "burstable, release required" do
-    include_context :fixed_window_limiter_helpers
-
-    let(:limit) { 1 }
-    let(:window) { 1 }
-    let(:min_limit) { Async::Limiter::MIN_WINDOW_LIMIT }
-    let(:max_limit) { Async::Limiter::MAX_LIMIT }
     let(:burstable) { true }
     let(:release_required) { true }
 
-    subject(:limiter) do
-      described_class.new(
-        limit,
-        window: window,
-        min_limit: min_limit,
-        max_limit: max_limit,
-        burstable: burstable,
-        release_required: release_required
-      )
-    end
-
-    include_examples :chainable_async
-    include_examples :invalid_inputs
-    include_examples :limit
-    include_examples :limit=
-    include_examples :barrier
-    include_examples :count
+    include_examples :fixed_window_limiter
 
     describe "#async" do
       context "when processing work in batches" do
