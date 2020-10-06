@@ -1,3 +1,5 @@
+require "async/barrier"
+
 RSpec.shared_examples :chainable_async do
   let(:parent) { double }
 
@@ -27,74 +29,52 @@ end
 
 RSpec.shared_examples :invalid_inputs do
   describe "invalid inputs" do
-    context "when limit is invalid" do
+    shared_examples :raises_argument_error do
       it "raises an error" do
         expect {
-          described_class.new(
-            0,
-            burstable: burstable,
-            release_required: release_required
-          )
+          limiter
         }.to raise_error(Async::Limiter::ArgumentError)
+      end
+    end
 
-        expect {
-          described_class.new(
-            -1,
-            burstable: burstable,
-            release_required: release_required
-          )
-        }.to raise_error(Async::Limiter::ArgumentError)
+    context "when limit is invalid" do
+      context "when limit is 0" do
+        let(:limit) { 0 }
+
+        include_examples :raises_argument_error
+      end
+
+      context "when limit is -1" do
+        let(:limit) { -1 }
+
+        include_examples :raises_argument_error
       end
     end
 
     context "when min_limit is invalid" do
-      it "raises an error" do
-        expect {
-          described_class.new(
-            min_limit: -1,
-            burstable: burstable,
-            release_required: release_required
-          )
-        }.to raise_error(Async::Limiter::ArgumentError)
-      end
+      let(:min_limit) { -1 }
+
+      include_examples :raises_argument_error
     end
 
     context "when max_limit is invalid" do
-      it "raises an error" do
-        expect {
-          described_class.new(
-            max_limit: -1,
-            burstable: burstable,
-            release_required: release_required
-          )
-        }.to raise_error(Async::Limiter::ArgumentError)
-      end
+      let(:max_limit) { -1 }
+
+      include_examples :raises_argument_error
     end
 
     context "when max_limit is lower than min_limit" do
-      it "raises an error" do
-        expect {
-          described_class.new(
-            max_limit: 5,
-            min_limit: 10,
-            burstable: burstable,
-            release_required: release_required
-          )
-        }.to raise_error(Async::Limiter::ArgumentError)
-      end
+      let(:max_limit) { 5 }
+      let(:min_limit) { 10 }
+
+      include_examples :raises_argument_error
     end
 
     context "when limit is lower than min_limit" do
-      it "raises an error" do
-        expect {
-          described_class.new(
-            1,
-            min_limit: 10,
-            burstable: burstable,
-            release_required: release_required
-          )
-        }.to raise_error(Async::Limiter::ArgumentError)
-      end
+      let(:limit) { 1 }
+      let(:min_limit) { 10 }
+
+      include_examples :raises_argument_error
     end
   end
 end
@@ -118,15 +98,9 @@ end
 
 RSpec.shared_examples :limit= do
   describe "#limit=" do
-    subject(:limiter) do
-      described_class.new(
-        3,
-        burstable: burstable,
-        release_required: release_required,
-        max_limit: 10,
-        min_limit: 2
-      )
-    end
+    let(:limit) { 3 }
+    let(:max_limit) { 10 }
+    let(:min_limit) { 2 }
 
     before do
       expect(limiter.limit).to eq 3

@@ -1,15 +1,22 @@
-require "async/barrier"
 require "async/limiter/fixed_window"
 
 RSpec.describe Async::Limiter::FixedWindow do
   describe "burstable, release not required" do
     include_context :fixed_window_limiter_helpers
 
+    let(:limit) { 1 }
+    let(:window) { 1 }
+    let(:min_limit) { Async::Limiter::MIN_WINDOW_LIMIT }
+    let(:max_limit) { Async::Limiter::MAX_LIMIT }
     let(:burstable) { true }
     let(:release_required) { false }
 
     subject(:limiter) do
       described_class.new(
+        limit,
+        window: window,
+        min_limit: min_limit,
+        max_limit: max_limit,
         burstable: burstable,
         release_required: release_required
       )
@@ -23,15 +30,6 @@ RSpec.describe Async::Limiter::FixedWindow do
     include_examples :count
 
     describe "#async" do
-      subject(:limiter) do
-        described_class.new(
-          limit,
-          window: window,
-          burstable: burstable,
-          release_required: release_required
-        )
-      end
-
       context "when processing work in batches" do
         let(:window) { 0.1 } # shorter window to speed the specs
         let(:repeats) { 20 }
@@ -104,6 +102,7 @@ RSpec.describe Async::Limiter::FixedWindow do
         context "when task duration is shorter than window" do
           let(:task_duration) { 0.1 }
 
+          # intermittent failures
           it "runs the tasks sequentially" do
             expect(task_stats).to contain_exactly(
               ["task 0 start", 0],
