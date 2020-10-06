@@ -78,29 +78,54 @@ RSpec.describe Async::Limiter::Concurrent do
   end
 
   describe "#blocking?" do
-    context "with a default limiter" do
-      it "is blocking when a single lock is acquired" do
-        expect(limiter).not_to be_blocking
+    include_context :blocking_contexts
 
-        limiter.acquire
-        expect(limiter).to be_blocking
+    context "with a default limit" do
+      context "when no locks are acquired" do
+        include_examples :limiter_is_not_blocking
+      end
+
+      context "when a single lock is acquired" do
+        include_context :single_lock_is_acquired
+        include_examples :limiter_is_blocking
+
+        context "after release" do
+          before { limiter.release }
+          include_examples :limiter_is_not_blocking
+        end
+      end
+
+      context "when all the locks are released immediately" do
+        include_context :all_locks_are_released_immediately
+        include_examples :limiter_is_not_blocking
       end
     end
 
     context "when limit is 2" do
       let(:limit) { 2 }
 
-      it "is blocking when 2 locks are acquired" do
-        expect(limiter).not_to be_blocking
+      context "when no locks are acquired" do
+        include_examples :limiter_is_not_blocking
+      end
 
-        limiter.acquire
-        expect(limiter).not_to be_blocking
+      context "when a single lock is acquired" do
+        include_context :single_lock_is_acquired
+        include_examples :limiter_is_not_blocking
+      end
 
-        limiter.acquire
-        expect(limiter).to be_blocking
+      context "when all the locks are acquired" do
+        include_context :all_locks_are_acquired
+        include_examples :limiter_is_blocking
 
-        limiter.release
-        expect(limiter).not_to be_blocking
+        context "after release" do
+          before { limiter.release }
+          include_examples :limiter_is_not_blocking
+        end
+      end
+
+      context "when all the locks are released immediately" do
+        include_context :all_locks_are_released_immediately
+        include_examples :limiter_is_not_blocking
       end
     end
   end
