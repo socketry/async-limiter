@@ -12,7 +12,7 @@ RSpec.describe Async::Limiter::FixedWindow do
 
       context "when processing work in batches" do
         let(:limit) { 4 }
-        let(:window) { 0.1 } # shorter window to speed the specs
+        let(:window) { 0.1 } # shorter window to speed up the specs
         let(:repeats) { 20 }
         let(:task_duration) { 0.2 } # task lasts longer than a window
 

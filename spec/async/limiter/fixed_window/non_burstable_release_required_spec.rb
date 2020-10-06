@@ -34,21 +34,43 @@ RSpec.describe Async::Limiter::FixedWindow do
       context "when limit is 1" do
         let(:limit) { 1 }
         let(:repeats) { 3 }
-        let(:task_duration) { 0.1 }
 
-        it "executes the tasks sequentially" do
-          expect(task_stats).to contain_exactly(
-            ["task 0 start", 0],
-            ["task 0 end", be_within(50).of(100)],
-            ["task 1 start", be_within(50).of(1000)],
-            ["task 1 end", be_within(50).of(1100)],
-            ["task 2 start", be_within(50).of(2000)],
-            ["task 2 end", be_within(50).of(2100)]
-          )
+        context "when task duration is shorter than window" do
+          let(:task_duration) { 0.1 }
+
+          it "executes the tasks sequentially" do
+            expect(task_stats).to contain_exactly(
+              ["task 0 start", 0],
+              ["task 0 end", be_within(50).of(100)],
+              ["task 1 start", be_within(50).of(1000)],
+              ["task 1 end", be_within(50).of(1100)],
+              ["task 2 start", be_within(50).of(2000)],
+              ["task 2 end", be_within(50).of(2100)]
+            )
+          end
+
+          it "ensures max number of tasks in a time window equals the limit" do
+            expect(max_per_second).to eq limit
+          end
         end
 
-        it "ensures max number of tasks in a time window equals the limit" do
-          expect(max_per_second).to eq limit
+        context "when task duration is longer than window" do
+          let(:task_duration) { 1.5 }
+
+          it "executes the tasks sequentially" do
+            expect(task_stats).to contain_exactly(
+              ["task 0 start", 0],
+              ["task 0 end", be_within(50).of(1500)],
+              ["task 1 start", be_within(50).of(1500)],
+              ["task 1 end", be_within(50).of(3000)],
+              ["task 2 start", be_within(50).of(3000)],
+              ["task 2 end", be_within(50).of(4500)]
+            )
+          end
+
+          it "ensures max number of tasks in a time window equals the limit" do
+            expect(max_per_second).to eq limit
+          end
         end
       end
 
