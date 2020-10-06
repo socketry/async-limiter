@@ -128,55 +128,78 @@ RSpec.describe Async::Limiter::FixedWindow do
     end
 
     describe "#blocking?" do
-      context "with a default limiter" do
-        it "is blocking when a single lock is acquired" do
-          expect(limiter).not_to be_blocking
+      include_context :blocking_contexts
 
-          limiter.acquire
-          expect(limiter).to be_blocking
+      before do
+        wait_until_next_fixed_window_start
+      end
+
+      context "with a default limit" do
+        context "when no locks are acquired" do
+          include_examples :limiter_is_not_blocking
         end
 
-        it "is blocking when a lock is released in the same window" do
-          start_window = Async::Clock.now.to_i
-          limiter.acquire
-          expect(limiter).to be_blocking
+        context "when a single lock is acquired" do
+          include_context :single_lock_is_acquired
+          include_examples :limiter_is_blocking
 
-          limiter.release
-          current_window = Async::Clock.now.to_i
-          raise "time window changed" unless current_window == start_window
-          # We're still in the same time window
-          expect(limiter).to be_blocking
-        rescue RuntimeError
-          # This prevents intermittent spec failures.
-          retry
+          context "after window passes" do
+            before { wait_until_next_window }
+            include_examples :limiter_is_not_blocking
+          end
         end
 
-        it "is not blocking when a lock is not released in the next window" do
-          limiter.acquire
-          expect(limiter).to be_blocking
+        context "when all the locks are released immediately" do
+          include_context :all_locks_are_released_immediately
+          include_examples :limiter_is_blocking
 
-          Async::Task.current.sleep(limiter.window + 0.01)
-          expect(limiter).not_to be_blocking
+          context "after window passes" do
+            before { wait_until_next_window }
+            include_examples :limiter_is_not_blocking
+          end
+        end
+
+        context "when no locks are released until the next window" do
+          include_context :no_locks_are_released_until_next_window
+          include_examples :limiter_is_not_blocking
         end
       end
 
       context "when limit is 2" do
-        subject(:limiter) do
-          described_class.new(
-            2,
-            burstable: burstable,
-            release_required: release_required
-          )
+        let(:limit) { 2 }
+
+        context "when no locks are acquired" do
+          include_examples :limiter_is_not_blocking
         end
 
-        it "is blocking when 2 locks are acquired" do
-          expect(limiter).not_to be_blocking
+        context "when a single lock is acquired" do
+          include_context :single_lock_is_acquired
+          include_examples :limiter_is_not_blocking
+        end
 
-          limiter.acquire
-          expect(limiter).not_to be_blocking
+        context "when all the locks are acquired" do
+          include_context :all_locks_are_acquired
+          include_examples :limiter_is_blocking
 
-          limiter.acquire
-          expect(limiter).to be_blocking
+          context "after window passes" do
+            before { wait_until_next_window }
+            include_examples :limiter_is_not_blocking
+          end
+        end
+
+        context "when all the locks are released immediately" do
+          include_context :all_locks_are_released_immediately
+          include_examples :limiter_is_blocking
+
+          context "after window passes" do
+            before { wait_until_next_window }
+            include_examples :limiter_is_not_blocking
+          end
+        end
+
+        context "when no locks are released until the next window" do
+          include_context :no_locks_are_released_until_next_window
+          include_examples :limiter_is_not_blocking
         end
       end
     end

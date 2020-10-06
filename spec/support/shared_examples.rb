@@ -182,6 +182,16 @@ RSpec.shared_examples :fixed_window_limiter do
     Async::Task.current.sleep(delay)
   end
 
+  def wait_until_next_window
+    Async::Task.current.sleep(window)
+  end
+
+  def wait_until_next_window_frame
+    window_frame = window.to_f / limit
+
+    Async::Task.current.sleep(window_frame)
+  end
+
   let(:limit) { 1 }
   let(:window) { 1 }
   let(:min_limit) { Async::Limiter::MIN_WINDOW_LIMIT }
@@ -262,5 +272,45 @@ RSpec.shared_context :async_processing do
 
   before do
     result
+  end
+end
+
+RSpec.shared_context :blocking_contexts do
+  shared_examples :limiter_is_not_blocking do
+    it "is not blocking" do
+      expect(limiter).not_to be_blocking
+    end
+  end
+
+  shared_examples :limiter_is_blocking do
+    it "is blocking" do
+      expect(limiter).to be_blocking
+    end
+  end
+
+  shared_context :single_lock_is_acquired do
+    before do
+      limiter.acquire
+    end
+  end
+
+  shared_context :all_locks_are_acquired do
+    before do
+      limit.times { limiter.acquire }
+    end
+  end
+
+  shared_context :all_locks_are_released_immediately do
+    before do
+      limit.times { limiter.acquire }
+      limit.times { limiter.release }
+    end
+  end
+
+  shared_context :no_locks_are_released_until_next_window do
+    before do
+      limit.times { limiter.acquire }
+      wait_until_next_fixed_window_start
+    end
   end
 end

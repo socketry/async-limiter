@@ -88,7 +88,7 @@ RSpec.describe Async::Limiter::Concurrent do
     end
 
     context "when limit is 2" do
-      subject(:limiter) { described_class.new(2) }
+      let(:limit) { 2 }
 
       it "is blocking when 2 locks are acquired" do
         expect(limiter).not_to be_blocking
@@ -98,6 +98,9 @@ RSpec.describe Async::Limiter::Concurrent do
 
         limiter.acquire
         expect(limiter).to be_blocking
+
+        limiter.release
+        expect(limiter).not_to be_blocking
       end
     end
   end
