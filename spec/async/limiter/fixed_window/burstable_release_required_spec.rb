@@ -3,9 +3,11 @@ require "async/limiter/fixed_window"
 
 RSpec.describe Async::Limiter::FixedWindow do
   describe "burstable, release required" do
+    include_context :fixed_window_limiter_helpers
+    it_behaves_like :chainable_async
+
     let(:burstable) { true }
     let(:release_required) { true }
-    it_behaves_like :chainable_async
 
     subject(:limiter) do
       described_class.new(

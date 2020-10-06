@@ -3,23 +3,17 @@ require "async/limiter/fixed_window"
 
 RSpec.describe Async::Limiter::FixedWindow do
   describe "burstable, release not required" do
+    it_behaves_like :chainable_async
+    include_context :fixed_window_limiter_helpers
+
     let(:burstable) { true }
     let(:release_required) { false }
-    it_behaves_like :chainable_async
 
     subject(:limiter) do
       described_class.new(
         burstable: burstable,
         release_required: release_required
       )
-    end
-
-    def wait_until_next_fixed_window_start
-      window_index = (Async::Clock.now / limiter.window).floor
-      next_window_start_time = window_index.next * limiter.window
-      delay = next_window_start_time - Async::Clock.now
-
-      Async::Task.current.sleep(delay)
     end
 
     describe "#async" do
