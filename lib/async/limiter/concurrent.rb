@@ -20,9 +20,6 @@ module Async
         @max_limit = max_limit
         @min_limit = min_limit
 
-        @scheduler_task = nil
-        @scheduled = false
-
         validate!
       end
 
@@ -69,58 +66,19 @@ module Async
       def wait
         fiber = Fiber.current
 
-        # @waiting.any? check prevents fibers resumed via scheduler from
-        # slipping in operations before other waiting fibers get resumed.
-        if blocking? || (@scheduled && @waiting.any?)
+        if blocking?
           @waiting << fiber
-          schedule if schedule?
-          loop do
-            Task.yield # run this line at least once
-            break unless blocking?
-          end
+          Task.yield while blocking?
         end
       rescue Exception # rubocop:disable Lint/RescueException
         @waiting.delete(fiber)
         raise
       end
 
-      # Schedule resuming waiting tasks.
-      def schedule(parent: @parent || Task.current)
-        @scheduler_task ||=
-          parent.async { |task|
-            while @waiting.any? && !(@release_required && limit_blocking?)
-              delay = delay(next_acquire_time)
-              task.sleep(delay) if delay.positive?
-              resume_waiting
-            end
-
-            @scheduler_task = nil
-          }
-      end
-
-      def delay(time)
-        [time - Async::Clock.now, 0].max
-      end
-
-      def next_acquire_time
-        raise NotImplementedError
-      end
-
       def resume_waiting
         while !blocking? && (fiber = @waiting.shift)
           fiber.resume if fiber.alive?
         end
-
-        # Long running non-burstable tasks may end while
-        # #window_frame_blocking?. Start a scheduler if one is not running.
-        schedule if schedule?
-      end
-
-      def schedule?
-        @scheduled &&
-          @scheduler_task.nil? &&
-          @waiting.any? &&
-          !(@release_required && limit_blocking?)
       end
 
       def validate!
@@ -128,12 +86,16 @@ module Async
           raise ArgumentError, "max_limit is lower than min_limit"
         end
 
-        unless @max_limit.positive?
-          raise ArgumentError, "max_limit must be positive"
+        if @max_limit < 1
+          raise ArgumentError, "max_limit must be greater than 1"
         end
 
-        unless @min_limit.positive?
-          raise ArgumentError, "min_limit must be positive"
+        if @min_limit < 1
+          raise ArgumentError, "max_limit must be greater than 1"
+        end
+
+        if @limit.finite? && (@limit % 1).nonzero?
+          raise ArgumentError, "limit must be whole number"
         end
 
         unless @limit.between?(@min_limit, @max_limit)
