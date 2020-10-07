@@ -228,6 +228,12 @@ RSpec.shared_context :async_processing do
       time.truncate(1)
     }.tally.values.max
   end
+  let(:window_frame) { window.to_f / limit }
+  let(:window_frame_indexes) do
+    start_time = acquired_times.first
+    acquired_times.map { |time| ((time - start_time) / window_frame).floor }
+  end
+  let(:max_per_frame) { window_frame_indexes.tally.values.max }
   let(:task_stats) { [] }
 
   attr_accessor :maximum
