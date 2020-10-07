@@ -1,35 +1,46 @@
 require "async/clock"
 require "async/task"
 require_relative "constants"
-require_relative "window_options"
 
 module Async
   module Limiter
     class Window
-      prepend WindowOptions
-
       attr_reader :count
 
       attr_reader :limit
 
       attr_reader :waiting
 
-      def initialize(limit = 1, parent: nil, max_limit: MAX_LIMIT, min_limit: 1)
+      attr_reader :window
+
+      attr_reader :burstable
+
+      attr_reader :release_required
+
+      def initialize(limit = 1, window: 1, parent: nil,
+        min_limit: MIN_WINDOW_LIMIT, max_limit: MAX_LIMIT,
+        burstable: true, release_required: true)
         @count = 0
         @limit = limit
-        @waiting = []
+        @window = window
         @parent = parent
         @max_limit = max_limit
         @min_limit = min_limit
+        @burstable = burstable
+        @release_required = release_required
 
+        @acquired_times = []
+        @waiting = []
         @scheduler_task = nil
-        @scheduled = false
+        @scheduled = true
+        @last_acquired_time = NULL_TIME
 
+        adjust_limit
         validate!
       end
 
       def blocking?
-        limit_blocking?
+        limit_blocking? || window_blocking? || window_frame_blocking?
       end
 
       def async(parent: (@parent || Task.current), **options)
@@ -44,12 +55,17 @@ module Async
       def acquire
         wait
         @count += 1
+
+        @acquired_times.unshift(Clock.now)
+        @acquired_times = @acquired_times.first(@limit)
+        @last_acquired_time = Clock.now
       end
 
       def release
         @count -= 1
 
-        resume_waiting
+        # We're resuming waiting fibers when lock is released.
+        resume_waiting if @release_required
       end
 
       def limit=(new_limit)
@@ -60,12 +76,20 @@ module Async
         else
           new_limit
         end
+
+        adjust_limit
+
+        limit
       end
 
       private
 
       def limit_blocking?
-        @count >= @limit
+        @release_required && @count >= @limit
+      end
+
+      def window_frame_blocking?
+        !@burstable && next_window_frame_start_time > Clock.now
       end
 
       def wait
@@ -73,7 +97,7 @@ module Async
 
         # @waiting.any? check prevents fibers resumed via scheduler from
         # slipping in operations before other waiting fibers get resumed.
-        if blocking? || (@scheduled && @waiting.any?)
+        if blocking? || @waiting.any?
           @waiting << fiber
           schedule if schedule?
           loop do
@@ -90,7 +114,7 @@ module Async
       def schedule(parent: @parent || Task.current)
         @scheduler_task ||=
           parent.async { |task|
-            while @waiting.any? && !(@release_required && limit_blocking?)
+            while @waiting.any? && !limit_blocking?
               delay = delay(next_acquire_time)
               task.sleep(delay) if delay.positive?
               resume_waiting
@@ -102,10 +126,6 @@ module Async
 
       def delay(time)
         [time - Async::Clock.now, 0].max
-      end
-
-      def next_acquire_time
-        raise NotImplementedError
       end
 
       def resume_waiting
@@ -122,7 +142,47 @@ module Async
         @scheduled &&
           @scheduler_task.nil? &&
           @waiting.any? &&
-          !(@release_required && limit_blocking?)
+          !limit_blocking?
+      end
+
+      # If @limit is a decimal number make it a whole number and adjust @window.
+      def adjust_limit
+        return if @limit.infinite?
+        return if (@limit % 1).zero?
+
+        case @limit
+        when 0...1
+          @window *= 1 / @limit
+          @limit = 1
+        when (1..)
+          if @window >= 2
+            @window *= @limit.floor / @limit
+            @limit = @limit.floor
+          else
+            @window *= @limit.ceil / @limit
+            @limit = @limit.ceil
+          end
+        else
+          raise "invalid limit #{@limit}"
+        end
+
+        window_updated
+      end
+
+      def next_window_frame_start_time
+        window_frame = @window.to_f / @limit
+        @last_acquired_time + window_frame
+      end
+
+      def next_acquire_time
+        if @burstable
+          next_window_start_time
+        else
+          next_window_frame_start_time
+        end
+      end
+
+      def window_updated
       end
 
       def validate!

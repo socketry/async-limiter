@@ -8,28 +8,14 @@ module Async
     class FixedWindow < Window
       NULL_INDEX = -1
 
-      attr_reader :window
+      def initialize(...)
+        super(...)
 
-      def initialize(*args, window: 1, min_limit: MIN_WINDOW_LIMIT, **options)
-        super(*args, min_limit: min_limit, **options)
-
-        @window = window
-        @acquired_times = []
         @acquired_window_indexes = []
-
-        @scheduled = true
-        adjust_limit
-      end
-
-      def blocking?
-        super || window_blocking?
       end
 
       def acquire
         super
-
-        @acquired_times.unshift(Clock.now)
-        @acquired_times = @acquired_times.first(@limit)
 
         @acquired_window_indexes.unshift(window_index)
         @acquired_window_indexes = @acquired_window_indexes.first(@limit)
@@ -38,7 +24,7 @@ module Async
       private
 
       def window_blocking?
-        first_index_in_limit_scope == window_index
+        @burstable && first_index_in_limit_scope == window_index
       end
 
       def first_index_in_limit_scope
