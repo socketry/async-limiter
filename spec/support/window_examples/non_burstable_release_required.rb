@@ -5,7 +5,7 @@ RSpec.shared_examples :non_burstable_release_required do
     let(:burstable) { false }
     let(:release_required) { true }
 
-    include_examples :set_limit_non_burstable
+    include_examples :set_decimal_limit_non_burstable
 
     describe "#async" do
       include_context :async_processing
@@ -121,7 +121,6 @@ RSpec.shared_examples :non_burstable_release_required do
         context "when task duration is longer than window frame" do
           let(:task_duration) { 1.5 }
 
-          # spec with intermittent failures
           it "intermingles task execution" do
             expect(task_stats).to contain_exactly(
               ["task 0 start", 0],

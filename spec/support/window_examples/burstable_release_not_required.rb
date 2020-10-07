@@ -5,7 +5,7 @@ RSpec.shared_examples :burstable_release_not_required do
     let(:burstable) { true }
     let(:release_required) { false }
 
-    include_examples :set_limit_burstable
+    include_examples :set_decimal_limit_burstable
 
     describe "#async" do
       include_context :async_processing
