@@ -3,8 +3,6 @@ RSpec.shared_examples :non_burstable_release_required do
     let(:burstable) { false }
     let(:release_required) { true }
 
-    include_examples :window_limiter
-
     describe "#async" do
       include_context :async_processing
 
