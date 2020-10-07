@@ -10,26 +10,7 @@ RSpec.describe Async::Limiter::FixedWindow do
     describe "#async" do
       include_context :async_processing
 
-      context "when processing work in batches" do
-        let(:limit) { 4 }
-        let(:window) { 0.1 } # shorter window to speed up the specs
-        let(:repeats) { 20 }
-        let(:task_duration) { 0.2 } # task lasts longer than a window
-
-        it "checks max number of concurrent task exceeds the limit" do
-          expect(maximum).to eq 3 * limit
-        end
-
-        it "checks the results are in the correct order" do
-          expect(result).to eq (0...repeats).to_a
-        end
-
-        it "checks max number of tasks in a time window equals the limit" do
-          expect(max_per_window).to eq limit
-        end
-      end
-
-      context "when tasks run one at a time" do
+      context "when limit is 1" do
         let(:limit) { 1 }
         let(:window) { 1 }
         let(:repeats) { 6 }
@@ -54,6 +35,22 @@ RSpec.describe Async::Limiter::FixedWindow do
               ["task 5 end", be_within(50).of(5100)]
             )
           end
+
+          it "ensures max number of concurrent tasks equals limit" do
+            expect(maximum).to eq limit
+          end
+
+          it "ensures the results are in the correct order" do
+            expect(result).to eq (0...repeats).to_a
+          end
+
+          it "ensures max number of started tasks in a window == limit" do
+            expect(max_per_second).to eq limit
+          end
+
+          it "ensures max number of started tasks in a window frame equals 1" do
+            expect(max_per_frame).to eq 1
+          end
         end
 
         context "when task duration is longer than window" do
@@ -75,10 +72,26 @@ RSpec.describe Async::Limiter::FixedWindow do
               ["task 5 end", be_within(50).of(6500)]
             )
           end
+
+          it "ensures max number of concurrent tasks is greater than limit" do
+            expect(maximum).to eq 2
+          end
+
+          it "ensures the results are in the correct order" do
+            expect(result).to eq (0...repeats).to_a
+          end
+
+          it "ensures max number of started tasks in a window == limit" do
+            expect(max_per_second).to eq limit
+          end
+
+          it "ensures max number of started tasks in a window frame equals 1" do
+            expect(max_per_frame).to eq 1
+          end
         end
       end
 
-      context "when tasks are executed concurrently" do
+      context "when limit is 3" do
         let(:limit) { 3 }
         let(:window) { 1 }
         let(:repeats) { 6 }
@@ -102,6 +115,22 @@ RSpec.describe Async::Limiter::FixedWindow do
               ["task 5 end", be_within(50).of(1100)]
             )
           end
+
+          it "ensures max number of concurrent tasks equals limit" do
+            expect(maximum).to eq limit
+          end
+
+          it "ensures the results are in the correct order" do
+            expect(result).to eq (0...repeats).to_a
+          end
+
+          it "ensures max number of started tasks in a window == limit" do
+            expect(max_per_second).to eq limit
+          end
+
+          it "ensures max number of started tasks in a window frame == limit" do
+            expect(max_per_frame).to eq limit
+          end
         end
 
         context "when task duration is longer than window" do
@@ -122,6 +151,22 @@ RSpec.describe Async::Limiter::FixedWindow do
               ["task 5 start", be_within(50).of(1000)],
               ["task 5 end", be_within(50).of(2500)]
             )
+          end
+
+          it "ensures max number of concurrent tasks is greater than limit" do
+            expect(maximum).to eq (2 * limit)
+          end
+
+          it "ensures the results are in the correct order" do
+            expect(result).to eq (0...repeats).to_a
+          end
+
+          it "ensures max number of started tasks in a window == limit" do
+            expect(max_per_second).to eq limit
+          end
+
+          it "ensures max number of started tasks in a window frame == limit" do
+            expect(max_per_frame).to eq limit
           end
         end
       end

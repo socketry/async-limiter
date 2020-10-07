@@ -230,13 +230,15 @@ RSpec.shared_context :async_processing do
   end
   let(:window_frame) { window.to_f / limit }
   let(:window_frame_indexes) do
-    start_time = acquired_times.first
-    acquired_times.map { |time| ((time - start_time) / window_frame).floor }
+    acquired_times.map { |time|
+      ((time - start_time.to_i) / window_frame).floor
+    }
   end
   let(:max_per_frame) { window_frame_indexes.tally.values.max }
   let(:task_stats) { [] }
 
   attr_accessor :maximum
+  attr_accessor :start_time
 
   let(:result) do
     current = 0
@@ -246,7 +248,7 @@ RSpec.shared_context :async_processing do
       wait_until_next_fixed_window_start
     end
 
-    start_time = Async::Clock.now
+    self.start_time = Async::Clock.now
 
     repeats.times.map { |i|
       limiter.async do |task|

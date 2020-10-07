@@ -28,8 +28,8 @@ RSpec.describe Async::Limiter::FixedWindow do
             )
           end
 
-          it "ensures max number of concurrent tasks equals 1" do
-            expect(maximum).to eq 1
+          it "ensures max number of concurrent tasks equals limit" do
+            expect(maximum).to eq limit
           end
 
           it "ensures the results are in the correct order" do
