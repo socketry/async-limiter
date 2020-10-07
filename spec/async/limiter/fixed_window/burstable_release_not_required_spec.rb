@@ -154,7 +154,7 @@ RSpec.describe Async::Limiter::FixedWindow do
           end
 
           it "ensures max number of concurrent tasks is greater than limit" do
-            expect(maximum).to eq (2 * limit)
+            expect(maximum).to eq 2 * limit
           end
 
           it "ensures the results are in the correct order" do
