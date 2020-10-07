@@ -5,7 +5,7 @@ RSpec.describe Async::Limiter::FixedWindow do
     let(:burstable) { false }
     let(:release_required) { true }
 
-    include_examples :fixed_window_limiter
+    include_examples :window_limiter
 
     describe "#async" do
       include_context :async_processing

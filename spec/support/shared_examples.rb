@@ -173,7 +173,7 @@ RSpec.shared_examples :count do
   end
 end
 
-RSpec.shared_examples :fixed_window_limiter do
+RSpec.shared_examples :window_limiter do
   def wait_until_next_fixed_window_start
     window_index = (Async::Clock.now / limiter.window).floor
     next_window_start_time = window_index.next * limiter.window
