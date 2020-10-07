@@ -1,9 +1,7 @@
-require "async/limiter/sliding_window"
-
-RSpec.describe Async::Limiter::SlidingWindow do
-  describe "burstable, release not required" do
-    let(:burstable) { true }
-    let(:release_required) { false }
+RSpec.shared_examples :non_burstable_release_required do
+  describe "non burstable, release required" do
+    let(:burstable) { false }
+    let(:release_required) { true }
 
     include_examples :window_limiter
 
@@ -12,26 +10,19 @@ RSpec.describe Async::Limiter::SlidingWindow do
 
       context "when limit is 1" do
         let(:limit) { 1 }
-        let(:window) { 1 }
-        let(:repeats) { 6 }
+        let(:repeats) { 3 }
 
         context "when task duration is shorter than window" do
           let(:task_duration) { 0.1 }
 
-          it "runs the tasks sequentially" do
+          it "executes the tasks sequentially" do
             expect(task_stats).to contain_exactly(
               ["task 0 start", 0],
               ["task 0 end", be_within(50).of(100)],
               ["task 1 start", be_within(50).of(1000)],
               ["task 1 end", be_within(50).of(1100)],
               ["task 2 start", be_within(50).of(2000)],
-              ["task 2 end", be_within(50).of(2100)],
-              ["task 3 start", be_within(50).of(3000)],
-              ["task 3 end", be_within(50).of(3100)],
-              ["task 4 start", be_within(50).of(4000)],
-              ["task 4 end", be_within(50).of(4100)],
-              ["task 5 start", be_within(50).of(5000)],
-              ["task 5 end", be_within(50).of(5100)]
+              ["task 2 end", be_within(50).of(2100)]
             )
           end
 
@@ -55,25 +46,19 @@ RSpec.describe Async::Limiter::SlidingWindow do
         context "when task duration is longer than window" do
           let(:task_duration) { 1.5 }
 
-          it "intermingles task execution" do
+          it "executes the tasks sequentially" do
             expect(task_stats).to contain_exactly(
               ["task 0 start", 0],
-              ["task 1 start", be_within(50).of(1000)],
               ["task 0 end", be_within(50).of(1500)],
-              ["task 2 start", be_within(50).of(2000)],
-              ["task 1 end", be_within(50).of(2500)],
-              ["task 3 start", be_within(50).of(3000)],
-              ["task 2 end", be_within(50).of(3500)],
-              ["task 4 start", be_within(50).of(4000)],
-              ["task 3 end", be_within(50).of(4500)],
-              ["task 5 start", be_within(50).of(5000)],
-              ["task 4 end", be_within(50).of(5500)],
-              ["task 5 end", be_within(50).of(6500)]
+              ["task 1 start", be_within(50).of(1500)],
+              ["task 1 end", be_within(50).of(3000)],
+              ["task 2 start", be_within(50).of(3000)],
+              ["task 2 end", be_within(50).of(4500)]
             )
           end
 
-          it "ensures max number of concurrent tasks is greater than limit" do
-            expect(maximum).to eq 2
+          it "ensures max number of concurrent tasks equals the limit" do
+            expect(maximum).to eq limit
           end
 
           it "ensures the results are in the correct order" do
@@ -91,31 +76,68 @@ RSpec.describe Async::Limiter::SlidingWindow do
       end
 
       context "when limit is 3" do
-        let(:limit) { 3 }
-        let(:window) { 1 }
+        let(:limit) { 3 } # window_frame is 1.0 / 3 = 0.33
         let(:repeats) { 6 }
 
-        context "when task duration is shorter than window" do
+        context "when task duration is shorter than window frame" do
           let(:task_duration) { 0.1 }
 
-          it "runs the tasks concurrently" do
+          it "executes the tasks sequentially" do
             expect(task_stats).to contain_exactly(
               ["task 0 start", 0],
               ["task 0 end", be_within(50).of(100)],
-              ["task 1 start", 0],
-              ["task 1 end", be_within(50).of(100)],
-              ["task 2 start", 0],
-              ["task 2 end", be_within(50).of(100)],
+              ["task 1 start", be_within(50).of(333)],
+              ["task 1 end", be_within(50).of(433)],
+              ["task 2 start", be_within(50).of(666)],
+              ["task 2 end", be_within(50).of(766)],
               ["task 3 start", be_within(50).of(1000)],
               ["task 3 end", be_within(50).of(1100)],
-              ["task 4 start", be_within(50).of(1000)],
-              ["task 4 end", be_within(50).of(1100)],
-              ["task 5 start", be_within(50).of(1000)],
-              ["task 5 end", be_within(50).of(1100)]
+              ["task 4 start", be_within(50).of(1333)],
+              ["task 4 end", be_within(50).of(1433)],
+              ["task 5 start", be_within(50).of(1666)],
+              ["task 5 end", be_within(50).of(1766)]
             )
           end
 
-          it "ensures max number of concurrent tasks equals limit" do
+          it "ensures max number of concurrent tasks is 1" do
+            expect(maximum).to eq 1
+          end
+
+          it "ensures the results are in the correct order" do
+            expect(result).to eq (0...repeats).to_a
+          end
+
+          it "ensures max number of started tasks in a window == limit" do
+            expect(max_per_second).to eq limit
+          end
+
+          it "ensures max number of started tasks in a window frame equals 1" do
+            expect(max_per_frame).to eq 1
+          end
+        end
+
+        context "when task duration is longer than window frame" do
+          let(:task_duration) { 1.5 }
+
+          # spec with intermittent failures
+          it "intermingles task execution" do
+            expect(task_stats).to contain_exactly(
+              ["task 0 start", 0],
+              ["task 1 start", be_within(50).of(333)],
+              ["task 2 start", be_within(50).of(666)],
+              ["task 0 end", be_within(50).of(1500)], # resumes task 3
+              ["task 3 start", be_within(50).of(1500)],
+              ["task 1 end", be_within(50).of(1833)], # resumes task 4
+              ["task 4 start", be_within(50).of(1833)],
+              ["task 2 end", be_within(50).of(2166)], # resumes task 5
+              ["task 5 start", be_within(50).of(2166)],
+              ["task 3 end", be_within(50).of(3000)],
+              ["task 4 end", be_within(50).of(3333)],
+              ["task 5 end", be_within(50).of(3666)]
+            )
+          end
+
+          it "ensures max number of concurrent tasks equals the limit" do
             expect(maximum).to eq limit
           end
 
@@ -123,49 +145,14 @@ RSpec.describe Async::Limiter::SlidingWindow do
             expect(result).to eq (0...repeats).to_a
           end
 
-          it "ensures max number of started tasks in a window == limit" do
-            expect(max_per_second).to eq limit
+          # Sliding window sometimes does not start 'limit' tasks in the same
+          # second.
+          it "ensures max number of started tasks in a window <= limit" do
+            expect(max_per_second).to be <= limit
           end
 
-          it "ensures max number of started tasks in a window frame == limit" do
-            expect(max_per_frame).to eq limit
-          end
-        end
-
-        context "when task duration is longer than window" do
-          let(:task_duration) { 1.5 }
-
-          it "intermingles task execution" do
-            expect(task_stats).to contain_exactly(
-              ["task 0 start", 0],
-              ["task 0 end", be_within(50).of(1500)],
-              ["task 1 start", 0],
-              ["task 1 end", be_within(50).of(1500)],
-              ["task 2 start", 0],
-              ["task 2 end", be_within(50).of(1500)],
-              ["task 3 start", be_within(50).of(1000)],
-              ["task 3 end", be_within(50).of(2500)],
-              ["task 4 start", be_within(50).of(1000)],
-              ["task 4 end", be_within(50).of(2500)],
-              ["task 5 start", be_within(50).of(1000)],
-              ["task 5 end", be_within(50).of(2500)]
-            )
-          end
-
-          it "ensures max number of concurrent tasks is greater than limit" do
-            expect(maximum).to eq 2 * limit
-          end
-
-          it "ensures the results are in the correct order" do
-            expect(result).to eq (0...repeats).to_a
-          end
-
-          it "ensures max number of started tasks in a window == limit" do
-            expect(max_per_second).to eq limit
-          end
-
-          it "ensures max number of started tasks in a window frame == limit" do
-            expect(max_per_frame).to eq limit
+          it "ensures max number of started tasks in a window frame equals 1" do
+            expect(max_per_frame).to eq 1
           end
         end
       end
@@ -189,7 +176,7 @@ RSpec.describe Async::Limiter::SlidingWindow do
 
           context "after window passes" do
             before { wait_until_next_window }
-            include_examples :limiter_is_not_blocking
+            include_examples :limiter_is_blocking
           end
         end
 
@@ -205,12 +192,18 @@ RSpec.describe Async::Limiter::SlidingWindow do
 
         context "when no locks are released until the next window" do
           include_context :no_locks_are_released_until_next_window
-          include_examples :limiter_is_not_blocking
+          include_examples :limiter_is_blocking
+
+          after do
+            limiter.release
+            expect(limiter).not_to be_blocking
+          end
         end
       end
 
       context "when limit is 2" do
         let(:limit) { 2 }
+        let(:window_frame) { window.to_f / limit }
 
         context "when no locks are acquired" do
           include_examples :limiter_is_not_blocking
@@ -218,7 +211,12 @@ RSpec.describe Async::Limiter::SlidingWindow do
 
         context "when a single lock is acquired" do
           include_context :single_lock_is_acquired
-          include_examples :limiter_is_not_blocking
+          include_examples :limiter_is_blocking
+
+          context "after window frame passes" do
+            before { wait_until_next_window_frame }
+            include_examples :limiter_is_not_blocking
+          end
         end
 
         context "when all the locks are acquired" do
@@ -227,7 +225,7 @@ RSpec.describe Async::Limiter::SlidingWindow do
 
           context "after window passes" do
             before { wait_until_next_window }
-            include_examples :limiter_is_not_blocking
+            include_examples :limiter_is_blocking
           end
         end
 
@@ -243,7 +241,7 @@ RSpec.describe Async::Limiter::SlidingWindow do
 
         context "when no locks are released until the next window" do
           include_context :no_locks_are_released_until_next_window
-          include_examples :limiter_is_not_blocking
+          include_examples :limiter_is_blocking
         end
       end
     end

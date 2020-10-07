@@ -1,6 +1,4 @@
-require "async/limiter/fixed_window"
-
-RSpec.describe Async::Limiter::FixedWindow do
+RSpec.shared_examples :burstable_release_not_required do
   describe "burstable, release not required" do
     let(:burstable) { true }
     let(:release_required) { false }
@@ -18,7 +16,6 @@ RSpec.describe Async::Limiter::FixedWindow do
         context "when task duration is shorter than window" do
           let(:task_duration) { 0.1 }
 
-          # intermittent failures
           it "runs the tasks sequentially" do
             expect(task_stats).to contain_exactly(
               ["task 0 start", 0],
