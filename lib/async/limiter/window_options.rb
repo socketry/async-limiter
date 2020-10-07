@@ -49,7 +49,7 @@ module Async
         when 0...1
           @window *= 1 / @limit
           @limit = 1
-        when 1..
+        when (1..)
           if @window >= 2
             @window *= @limit.floor / @limit
             @limit = @limit.floor
