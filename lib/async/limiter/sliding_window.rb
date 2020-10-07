@@ -1,15 +1,11 @@
-require "async/clock"
-require_relative "base"
-require_relative "window_options"
+require_relative "window"
 
 module Async
   module Limiter
     # Ensures units are acquired during the sliding time window.
     # Example: You can perform N operations at 10:10:10.999 but can't perform
     # another N operations until 10:10:11.999.
-    class SlidingWindow < Base
-      include WindowOptions
-
+    class SlidingWindow < Window
       attr_reader :window
 
       def initialize(*args, window: 1, min_limit: MIN_WINDOW_LIMIT, **options)

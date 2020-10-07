@@ -1,9 +1,13 @@
+require "async/clock"
 require "async/task"
 require_relative "constants"
+require_relative "window_options"
 
 module Async
   module Limiter
-    class Base
+    class Window
+      prepend WindowOptions
+
       attr_reader :count
 
       attr_reader :limit

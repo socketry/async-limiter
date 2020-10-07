@@ -1,15 +1,11 @@
-require "async/clock"
-require_relative "base"
-require_relative "window_options"
+require_relative "window"
 
 module Async
   module Limiter
     # Ensures units are acquired during the time window.
     # Example: You can perform N operations at 10:10:10.999, and then can
     # perform another N operations at 10:10:11.000.
-    class FixedWindow < Base
-      include WindowOptions
-
+    class FixedWindow < Window
       NULL_INDEX = -1
 
       attr_reader :window
