@@ -6,6 +6,7 @@ module Async
   module Limiter
     class Window
       TYPES = %i[fixed sliding].freeze
+      NULL_INDEX = -1
 
       attr_reader :count
 
@@ -40,6 +41,8 @@ module Async
         @scheduled = true
         @last_acquired_time = NULL_TIME
 
+        @acquired_window_indexes = []
+
         adjust_limit
         validate!
       end
@@ -64,6 +67,11 @@ module Async
         @acquired_times.unshift(Clock.now)
         @acquired_times = @acquired_times.first(@limit)
         @last_acquired_time = Clock.now
+
+        if fixed?
+          @acquired_window_indexes.unshift(window_index)
+          @acquired_window_indexes = @acquired_window_indexes.first(@limit)
+        end
       end
 
       def release
@@ -187,7 +195,48 @@ module Async
         end
       end
 
+      def fixed?
+        @type == :fixed
+      end
+
+      def sliding?
+        @type == :sliding
+      end
+
       def window_updated
+        if fixed?
+          @acquired_window_indexes = @acquired_times.map(&method(:window_index))
+        end
+      end
+
+      def window_blocking?
+        return false unless @burstable
+
+        if fixed?
+          first_index_in_limit_scope =
+            @acquired_window_indexes.fetch(@limit - 1, NULL_INDEX)
+          first_index_in_limit_scope == window_index
+        elsif sliding?
+          next_window_start_time > Clock.now
+        else
+          raise "invalid type #{@type}"
+        end
+      end
+
+      def next_window_start_time
+        if fixed?
+          window_index.next * @window
+        elsif sliding?
+          first_time_in_limit_scope =
+            @acquired_times.fetch(@limit - 1, NULL_TIME)
+          first_time_in_limit_scope + @window
+        else
+          raise "invalid type #{@type}"
+        end
+      end
+
+      def window_index(time = Clock.now)
+        (time / @window).floor
       end
 
       def validate!
