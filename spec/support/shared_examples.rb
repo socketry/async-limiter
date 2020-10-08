@@ -175,8 +175,24 @@ end
 
 RSpec.shared_examples :window_limiter do
   def wait_until_next_fixed_window_start
-    window_index = (Async::Clock.now / limiter.window).floor
-    next_window_start_time = window_index.next * limiter.window
+    window = limiter.window
+    limit = limiter.limit
+
+    # Logic from #update_concurrency
+    real_window =
+      case limit
+      when 0...1
+        window / limit
+      when (1..)
+        if window >= 2
+          window * limit.floor / limit
+        else
+          window * limit.ceil / limit
+        end
+      end
+
+    window_index = (Async::Clock.now / real_window).floor
+    next_window_start_time = window_index.next * real_window
     delay = next_window_start_time - Async::Clock.now
 
     Async::Task.current.sleep(delay)

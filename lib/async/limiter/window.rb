@@ -165,7 +165,10 @@ module Async
       # If limit is a decimal number (e.g. 0.5) it needs to be adjusted.
       # Make @limit a whole number and adjust @window appropriately.
       def update_concurrency
-        # TODO: handle float::NAN and other values?
+        # reset @limit and @window
+        @limit = @input_limit
+        @window = @input_window
+
         return if @input_limit.infinite?
         return if (@input_limit % 1).zero?
 
