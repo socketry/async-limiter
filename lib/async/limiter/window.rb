@@ -13,8 +13,6 @@ module Async
 
       attr_reader :type
 
-      attr_reader :burstable
-
       attr_reader :release_required
 
       def initialize(limit = 1, type: :fixed, window: 1, parent: nil,

@@ -2,7 +2,6 @@ RSpec.shared_examples :non_burstable_release_required do
   describe "non burstable, release required" do
     include_examples :window_limiter
 
-    let(:burstable) { false }
     let(:release_required) { true }
 
     include_examples :set_decimal_limit_non_burstable

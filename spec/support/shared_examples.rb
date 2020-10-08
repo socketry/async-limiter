@@ -215,7 +215,6 @@ RSpec.shared_examples :window_limiter do
     described_class.new(
       limit,
       window: window,
-      burstable: burstable,
       release_required: release_required
     )
   end
@@ -229,7 +228,7 @@ RSpec.shared_examples :window_limiter do
 end
 
 RSpec.shared_context :async_processing do
-  require "async/limiter/fixed_window"
+  require "async/limiter/window/fixed"
 
   let(:acquired_times) { [] }
   let(:max_per_second) do
@@ -256,7 +255,7 @@ RSpec.shared_context :async_processing do
     current = 0
     self.maximum = 0
 
-    if described_class == Async::Limiter::FixedWindow
+    if described_class == Async::Limiter::Window::Fixed
       wait_until_next_fixed_window_start
     end
 
