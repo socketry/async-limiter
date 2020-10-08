@@ -4,20 +4,11 @@ require "async/limiter/concurrent"
 
 RSpec.describe Async::Limiter::Concurrent do
   let(:limit) { 1 }
-  let(:min_limit) { 1 }
-  let(:max_limit) { Float::INFINITY }
 
-  subject(:limiter) do
-    described_class.new(
-      limit,
-      min_limit: min_limit,
-      max_limit: max_limit
-    )
-  end
+  subject(:limiter) { described_class.new(limit) }
 
   include_examples :chainable_async
   include_examples :invalid_inputs
-  include_examples :limit
   include_examples :limit=
   include_examples :barrier
   include_examples :count

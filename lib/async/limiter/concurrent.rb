@@ -10,14 +10,11 @@ module Async
 
       attr_reader :limit
 
-      def initialize(limit = 1, parent: nil,
-        max_limit: Float::INFINITY, min_limit: 1)
+      def initialize(limit = 1, parent: nil)
         @count = 0
         @limit = limit
         @waiting = []
         @parent = parent
-        @max_limit = max_limit
-        @min_limit = min_limit
 
         validate!
       end
@@ -47,13 +44,9 @@ module Async
       end
 
       def limit=(new_limit)
-        @limit = if new_limit > @max_limit
-          @max_limit
-        elsif new_limit < @min_limit
-          @min_limit
-        else
-          new_limit
-        end
+        validate_limit!(new_limit)
+
+        @limit = new_limit
       end
 
       private
@@ -81,25 +74,15 @@ module Async
       end
 
       def validate!
-        if @max_limit < @min_limit
-          raise ArgumentError, "max_limit is lower than min_limit"
-        end
-
-        if @max_limit < 1
-          raise ArgumentError, "max_limit must be greater than 1"
-        end
-
-        if @min_limit < 1
-          raise ArgumentError, "max_limit must be greater than 1"
-        end
-
         if @limit.finite? && (@limit % 1).nonzero?
           raise ArgumentError, "limit must be a whole number"
         end
 
-        unless @limit.between?(@min_limit, @max_limit)
-          raise ArgumentError, "limit not between min_limit and max_limit"
-        end
+        validate_limit!
+      end
+
+      def validate_limit!(value = @limit)
+        raise ArgumentError, "limit must be greater than 1" if value < 1
       end
     end
   end

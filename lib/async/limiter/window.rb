@@ -18,15 +18,12 @@ module Async
       attr_reader :release_required
 
       def initialize(limit = 1, type: :fixed, window: 1, parent: nil,
-        min_limit: Float::MIN, max_limit: Float::INFINITY,
         burstable: true, release_required: true)
         @count = 0
         @input_limit = @limit = limit
         @type = type
         @input_window = @window = window
         @parent = parent
-        @max_limit = max_limit
-        @min_limit = min_limit
         @burstable = burstable
         @release_required = release_required
 
@@ -85,14 +82,9 @@ module Async
       end
 
       def limit=(new_limit)
-        @input_limit = @limit =
-          if new_limit > @max_limit
-            @max_limit
-          elsif new_limit < @min_limit
-            @min_limit
-          else
-            new_limit
-          end
+        validate_limit!(new_limit)
+
+        @input_limit = @limit = new_limit
 
         update_concurrency
 
@@ -254,20 +246,12 @@ module Async
           raise ArgumentError, "invalid type #{@type.inspect}"
         end
 
-        if @max_limit < @min_limit
-          raise ArgumentError, "max_limit is lower than min_limit"
-        end
+        validate_limit!
+      end
 
-        unless @max_limit.positive?
-          raise ArgumentError, "max_limit must be positive"
-        end
-
-        unless @min_limit.positive?
-          raise ArgumentError, "min_limit must be positive"
-        end
-
-        unless @limit.between?(@min_limit, @max_limit)
-          raise ArgumentError, "limit not between min_limit and max_limit"
+      def validate_limit!(value = @input_limit)
+        unless value.positive?
+          raise ArgumentError, "limit must be positive number"
         end
       end
     end

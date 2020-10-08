@@ -50,80 +50,42 @@ RSpec.shared_examples :invalid_inputs do
         include_examples :raises_argument_error
       end
     end
-
-    context "when min_limit is invalid" do
-      let(:min_limit) { -1 }
-
-      include_examples :raises_argument_error
-    end
-
-    context "when max_limit is invalid" do
-      let(:max_limit) { -1 }
-
-      include_examples :raises_argument_error
-    end
-
-    context "when max_limit is lower than min_limit" do
-      let(:max_limit) { 5 }
-      let(:min_limit) { 10 }
-
-      include_examples :raises_argument_error
-    end
-
-    context "when limit is lower than min_limit" do
-      let(:limit) { 1 }
-      let(:min_limit) { 10 }
-
-      include_examples :raises_argument_error
-    end
-  end
-end
-
-RSpec.shared_examples :limit do
-  describe "#limit" do
-    context "with a default value" do
-      specify do
-        expect(limiter.limit).to eq 1
-      end
-    end
-
-    context "when limit is incremented" do
-      specify do
-        limiter.limit += 1
-        expect(limiter.limit).to eq 2
-      end
-    end
   end
 end
 
 RSpec.shared_examples :limit= do
   describe "#limit=" do
     let(:limit) { 3 }
-    let(:max_limit) { 10 }
-    let(:min_limit) { 2 }
 
     before do
       expect(limiter.limit).to eq 3
     end
 
-    context "when new limit is within max and min limits" do
+    context "when new limit is zero" do
+      it "raises argument error" do
+        expect {
+          limiter.limit = 0
+        }.to raise_error Async::Limiter::ArgumentError
+      end
+    end
+
+    context "when new limit is a negative number" do
+      let(:new_limit) { - rand(1000) }
+
+      it "raises argument error" do
+        expect {
+          limiter.limit = new_limit
+        }.to raise_error Async::Limiter::ArgumentError
+      end
+    end
+
+    context "when new limit is a positive number" do
+      let(:new_limit) { rand(1000) }
+
       it "updates limit" do
-        limiter.limit = 5
-        expect(limiter.limit).to eq 5
-      end
-    end
-
-    context "when new limit is greater than max_limit" do
-      it "updates limit to max_limit" do
-        limiter.limit = 50
-        expect(limiter.limit).to eq 10
-      end
-    end
-
-    context "when new limit is lower than min_limit" do
-      it "updates limit to min_limit" do
-        limiter.limit = 1
-        expect(limiter.limit).to eq 2
+        expect {
+          limiter.limit = new_limit
+        }.to change { limiter.limit }.from(limit).to(new_limit)
       end
     end
   end
@@ -210,15 +172,11 @@ RSpec.shared_examples :window_limiter do
 
   let(:limit) { 1 }
   let(:window) { 1 }
-  let(:min_limit) { Float::MIN }
-  let(:max_limit) { Float::INFINITY }
 
   subject(:limiter) do
     described_class.new(
       limit,
       window: window,
-      min_limit: min_limit,
-      max_limit: max_limit,
       burstable: burstable,
       release_required: release_required
     )
@@ -226,7 +184,6 @@ RSpec.shared_examples :window_limiter do
 
   include_examples :chainable_async
   include_examples :invalid_inputs
-  include_examples :limit
   include_examples :limit=
   include_examples :barrier
   include_examples :count
