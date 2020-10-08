@@ -1,8 +1,8 @@
-RSpec.shared_examples :non_burstable_release_required do
-  describe "non burstable, release required" do
+RSpec.shared_examples :non_burstable_lockless do
+  describe "non burstable, lockless" do
     include_examples :window_limiter
 
-    let(:release_required) { true }
+    let(:lock) { false }
 
     include_examples :set_decimal_limit_non_burstable
 
@@ -50,16 +50,16 @@ RSpec.shared_examples :non_burstable_release_required do
           it "executes the tasks sequentially" do
             expect(task_stats).to contain_exactly(
               ["task 0 start", 0],
+              ["task 1 start", be_within(50).of(1000)], # task 0 and 1 run
               ["task 0 end", be_within(50).of(1500)],
-              ["task 1 start", be_within(50).of(1500)],
-              ["task 1 end", be_within(50).of(3000)],
-              ["task 2 start", be_within(50).of(3000)],
-              ["task 2 end", be_within(50).of(4500)]
+              ["task 2 start", be_within(50).of(2000)], # task 1 and 2 run
+              ["task 1 end", be_within(50).of(2500)],
+              ["task 2 end", be_within(50).of(3500)]
             )
           end
 
-          it "ensures max number of concurrent tasks equals the limit" do
-            expect(maximum).to eq limit
+          it "ensures max number of concurrent tasks is greater than limit" do
+            expect(maximum).to eq 2
           end
 
           it "ensures the results are in the correct order" do
@@ -125,20 +125,20 @@ RSpec.shared_examples :non_burstable_release_required do
               ["task 0 start", 0],
               ["task 1 start", be_within(50).of(333)],
               ["task 2 start", be_within(50).of(666)],
-              ["task 0 end", be_within(50).of(1500)], # resumes task 3
-              ["task 3 start", be_within(50).of(1500)],
-              ["task 1 end", be_within(50).of(1833)], # resumes task 4
-              ["task 4 start", be_within(50).of(1833)],
-              ["task 2 end", be_within(50).of(2166)], # resumes task 5
-              ["task 5 start", be_within(75).of(2166)],
-              ["task 3 end", be_within(75).of(3000)],
-              ["task 4 end", be_within(75).of(3333)],
-              ["task 5 end", be_within(75).of(3666)]
+              ["task 3 start", be_within(50).of(1000)],
+              ["task 4 start", be_within(50).of(1333)], # 5 concurrent tasks
+              ["task 0 end", be_within(50).of(1500)],
+              ["task 5 start", be_within(50).of(1666)],
+              ["task 1 end", be_within(50).of(1833)],
+              ["task 2 end", be_within(50).of(2166)],
+              ["task 3 end", be_within(75).of(2500)],
+              ["task 4 end", be_within(75).of(2833)],
+              ["task 5 end", be_within(75).of(3166)]
             )
           end
 
-          it "ensures max number of concurrent tasks equals the limit" do
-            expect(maximum).to eq limit
+          it "ensures max number of concurrent tasks is greater than limit" do
+            expect(maximum).to eq 5
           end
 
           it "ensures the results are in the correct order" do
@@ -176,7 +176,7 @@ RSpec.shared_examples :non_burstable_release_required do
 
           context "after window passes" do
             before { wait_until_next_window }
-            include_examples :limiter_is_blocking
+            include_examples :limiter_is_not_blocking
           end
         end
 
@@ -192,12 +192,7 @@ RSpec.shared_examples :non_burstable_release_required do
 
         context "when no locks are released until the next window" do
           include_context :no_locks_are_released_until_next_window
-          include_examples :limiter_is_blocking
-
-          after do
-            limiter.release
-            expect(limiter).not_to be_blocking
-          end
+          include_examples :limiter_is_not_blocking
         end
       end
 
@@ -225,7 +220,7 @@ RSpec.shared_examples :non_burstable_release_required do
 
           context "after window passes" do
             before { wait_until_next_window }
-            include_examples :limiter_is_blocking
+            include_examples :limiter_is_not_blocking
           end
         end
 
@@ -241,7 +236,7 @@ RSpec.shared_examples :non_burstable_release_required do
 
         context "when no locks are released until the next window" do
           include_context :no_locks_are_released_until_next_window
-          include_examples :limiter_is_blocking
+          include_examples :limiter_is_not_blocking
         end
       end
     end

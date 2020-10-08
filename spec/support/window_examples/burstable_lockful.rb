@@ -1,8 +1,8 @@
-RSpec.shared_examples :burstable_release_required do
-  describe "burstable, release required" do
+RSpec.shared_examples :burstable_lockful do
+  describe "burstable, lockful" do
     include_examples :window_limiter
 
-    let(:release_required) { true }
+    let(:lock) { true }
 
     include_examples :set_decimal_limit_burstable
 

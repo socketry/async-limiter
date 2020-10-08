@@ -7,15 +7,14 @@ module Async
       # Example: You can perform N operations at 10:10:10.999 but can't perform
       # another N operations until 10:10:11.999.
       class Sliding < Window
-        def initialize(limit = 1, window: 1, parent: nil,
-          release_required: true)
+        def initialize(limit = 1, window: 1, parent: nil, lock: true)
           super(
             limit,
             type: :sliding,
             burstable: true,
             window: window,
             parent: parent,
-            release_required: release_required
+            lock: lock
           )
         end
       end

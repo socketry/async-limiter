@@ -215,7 +215,7 @@ RSpec.shared_examples :window_limiter do
     described_class.new(
       limit,
       window: window,
-      release_required: release_required
+      lock: lock
     )
   end
 

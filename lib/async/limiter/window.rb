@@ -13,17 +13,17 @@ module Async
 
       attr_reader :type
 
-      attr_reader :release_required
+      attr_reader :lock
 
       def initialize(limit = 1, type: :fixed, window: 1, parent: nil,
-        burstable: true, release_required: true)
+        burstable: true, lock: true)
         @count = 0
         @input_limit = @limit = limit
         @type = type
         @input_window = @window = window
         @parent = parent
         @burstable = burstable
-        @release_required = release_required
+        @lock = lock
 
         @acquired_times = []
         @waiting = []
@@ -76,7 +76,7 @@ module Async
         @count -= 1
 
         # We're resuming waiting fibers when lock is released.
-        resume_waiting if @release_required
+        resume_waiting if @lock
       end
 
       def limit=(new_limit)
@@ -96,7 +96,7 @@ module Async
       private
 
       def limit_blocking?
-        @release_required && @count >= @limit
+        @lock && @count >= @limit
       end
 
       def window_frame_blocking?
