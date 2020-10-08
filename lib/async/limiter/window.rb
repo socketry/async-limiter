@@ -83,12 +83,16 @@ module Async
 
       def limit=(new_limit)
         validate_limit!(new_limit)
-
         @input_limit = @limit = new_limit
-
         update_concurrency
-
         limit
+      end
+
+      def window=(new_window)
+        validate_window!(new_window)
+        @input_window = @window = new_window
+        update_concurrency
+        window
       end
 
       private
@@ -247,11 +251,18 @@ module Async
         end
 
         validate_limit!
+        validate_window!
       end
 
       def validate_limit!(value = @input_limit)
         unless value.positive?
           raise ArgumentError, "limit must be positive number"
+        end
+      end
+
+      def validate_window!(value = @input_window)
+        unless value.positive?
+          raise ArgumentError, "window must be positive number"
         end
       end
     end

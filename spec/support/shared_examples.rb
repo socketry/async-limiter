@@ -91,6 +91,44 @@ RSpec.shared_examples :limit= do
   end
 end
 
+RSpec.shared_examples :window= do
+  describe "#window=" do
+    let(:window) { 2 }
+
+    before do
+      expect(limiter.window).to eq 2
+    end
+
+    context "when new window is zero" do
+      it "raises argument error" do
+        expect {
+          limiter.window = 0
+        }.to raise_error Async::Limiter::ArgumentError
+      end
+    end
+
+    context "when new window is a negative number" do
+      let(:new_window) { - rand(10) }
+
+      it "raises argument error" do
+        expect {
+          limiter.window = new_window
+        }.to raise_error Async::Limiter::ArgumentError
+      end
+    end
+
+    context "when new window is a positive number" do
+      let(:new_window) { rand(10) }
+
+      it "updates window" do
+        expect {
+          limiter.window = new_window
+        }.to change { limiter.window }.from(window).to(new_window)
+      end
+    end
+  end
+end
+
 RSpec.shared_examples :barrier do
   context "with barrier" do
     let(:capacity) { 2 }
@@ -185,6 +223,7 @@ RSpec.shared_examples :window_limiter do
   include_examples :chainable_async
   include_examples :invalid_inputs
   include_examples :limit=
+  include_examples :window=
   include_examples :barrier
   include_examples :count
 end
