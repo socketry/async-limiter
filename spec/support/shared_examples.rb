@@ -80,7 +80,7 @@ RSpec.shared_examples :limit= do
     end
 
     context "when new limit is a positive number" do
-      let(:new_limit) { limit + rand(1000) }
+      let(:new_limit) { limit + 1 + rand(1000) }
 
       it "updates limit" do
         expect {
@@ -118,7 +118,7 @@ RSpec.shared_examples :window= do
     end
 
     context "when new window is a positive number" do
-      let(:new_window) { window + rand(10) }
+      let(:new_window) { window + 1 + rand(10) }
 
       it "updates window" do
         expect {
