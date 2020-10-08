@@ -194,8 +194,8 @@ RSpec.shared_examples :window_limiter do
 
   let(:limit) { 1 }
   let(:window) { 1 }
-  let(:min_limit) { Async::Limiter::MIN_WINDOW_LIMIT }
-  let(:max_limit) { Async::Limiter::MAX_LIMIT }
+  let(:min_limit) { Float::MIN }
+  let(:max_limit) { Float::INFINITY }
 
   subject(:limiter) do
     described_class.new(

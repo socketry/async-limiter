@@ -5,7 +5,7 @@ require "async/limiter/concurrent"
 RSpec.describe Async::Limiter::Concurrent do
   let(:limit) { 1 }
   let(:min_limit) { 1 }
-  let(:max_limit) { Async::Limiter::MAX_LIMIT }
+  let(:max_limit) { Float::INFINITY }
 
   subject(:limiter) do
     described_class.new(

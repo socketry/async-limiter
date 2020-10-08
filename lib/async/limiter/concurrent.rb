@@ -12,7 +12,8 @@ module Async
 
       attr_reader :waiting
 
-      def initialize(limit = 1, parent: nil, max_limit: MAX_LIMIT, min_limit: 1)
+      def initialize(limit = 1, parent: nil,
+        max_limit: Float::INFINITY, min_limit: 1)
         @count = 0
         @limit = limit
         @waiting = []

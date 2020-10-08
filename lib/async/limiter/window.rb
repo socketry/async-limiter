@@ -6,6 +6,7 @@ module Async
   module Limiter
     class Window
       TYPES = %i[fixed sliding].freeze
+      NULL_TIME = -1
       NULL_INDEX = -1
 
       attr_reader :count
@@ -23,7 +24,7 @@ module Async
       attr_reader :release_required
 
       def initialize(limit = 1, type: :fixed, window: 1, parent: nil,
-        min_limit: MIN_WINDOW_LIMIT, max_limit: MAX_LIMIT,
+        min_limit: Float::MIN, max_limit: Float::INFINITY,
         burstable: true, release_required: true)
         @count = 0
         @limit = limit
