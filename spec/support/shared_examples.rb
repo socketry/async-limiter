@@ -174,8 +174,9 @@ RSpec.shared_examples :count do
 end
 
 RSpec.shared_examples :window_limiter do
-  def wait_until_next_fixed_window_start
-    window = limiter.window
+  def next_fixed_window_start_time
+    # Prevent intermittent failures in specs that change window.
+    window = defined?(:new_window) ? new_window : limiter.window
     limit = limiter.limit
 
     # Logic from #update_concurrency
@@ -192,8 +193,11 @@ RSpec.shared_examples :window_limiter do
       end
 
     window_index = (Async::Clock.now / real_window).floor
-    next_window_start_time = window_index.next * real_window
-    delay = next_window_start_time - Async::Clock.now
+    window_index.next * real_window
+  end
+
+  def wait_until_next_fixed_window_start
+    delay = next_fixed_window_start_time - Async::Clock.now
 
     Async::Task.current.sleep(delay)
   end
