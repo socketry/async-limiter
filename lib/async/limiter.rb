@@ -1,6 +1,8 @@
 require_relative "limiter/concurrent"
-require_relative "limiter/fixed_window"
-require_relative "limiter/sliding_window"
+require_relative "limiter/unlimited"
+require_relative "limiter/window/continuous"
+require_relative "limiter/window/fixed"
+require_relative "limiter/window/sliding"
 
 module Async
   module Limiter
