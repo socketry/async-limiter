@@ -15,8 +15,6 @@ module Async
 
       attr_reader :type
 
-      attr_reader :waiting
-
       attr_reader :window
 
       attr_reader :burstable
