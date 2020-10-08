@@ -241,6 +241,10 @@ module Async
       end
 
       def validate!
+        unless TYPES.include?(@type)
+          raise ArgumentError, "invalid type #{@type.inspect}"
+        end
+
         if @max_limit < @min_limit
           raise ArgumentError, "max_limit is lower than min_limit"
         end
@@ -255,10 +259,6 @@ module Async
 
         unless @limit.between?(@min_limit, @max_limit)
           raise ArgumentError, "limit not between min_limit and max_limit"
-        end
-
-        unless TYPES.include?(@type)
-          raise ArgumentError, "invalid type #{@type.inspect}"
         end
       end
     end

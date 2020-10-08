@@ -96,7 +96,7 @@ module Async
         end
 
         if @limit.finite? && (@limit % 1).nonzero?
-          raise ArgumentError, "limit must be whole number"
+          raise ArgumentError, "limit must be a whole number"
         end
 
         unless @limit.between?(@min_limit, @max_limit)
