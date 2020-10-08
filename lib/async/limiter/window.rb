@@ -11,11 +11,7 @@ module Async
 
       attr_reader :count
 
-      attr_reader :limit
-
       attr_reader :type
-
-      attr_reader :window
 
       attr_reader :burstable
 
@@ -25,9 +21,9 @@ module Async
         min_limit: Float::MIN, max_limit: Float::INFINITY,
         burstable: true, release_required: true)
         @count = 0
-        @limit = limit
+        @input_limit = @limit = limit
         @type = type
-        @window = window
+        @input_window = @window = window
         @parent = parent
         @max_limit = max_limit
         @min_limit = min_limit
@@ -42,8 +38,16 @@ module Async
 
         @acquired_window_indexes = []
 
-        adjust_limit
+        update_concurrency
         validate!
+      end
+
+      def limit
+        @input_limit
+      end
+
+      def window
+        @input_window
       end
 
       def blocking?
@@ -81,15 +85,16 @@ module Async
       end
 
       def limit=(new_limit)
-        @limit = if new_limit > @max_limit
-          @max_limit
-        elsif new_limit < @min_limit
-          @min_limit
-        else
-          new_limit
-        end
+        @input_limit = @limit =
+          if new_limit > @max_limit
+            @max_limit
+          elsif new_limit < @min_limit
+            @min_limit
+          else
+            new_limit
+          end
 
-        adjust_limit
+        update_concurrency
 
         limit
       end
@@ -157,25 +162,28 @@ module Async
           !limit_blocking?
       end
 
-      # If @limit is a decimal number make it a whole number and adjust @window.
-      def adjust_limit
-        return if @limit.infinite?
-        return if (@limit % 1).zero?
+      # If limit is a decimal number (e.g. 0.5) it needs to be adjusted.
+      # Make @limit a whole number and adjust @window appropriately.
+      def update_concurrency
+        # TODO: handle float::NAN and other values?
+        return if @input_limit.infinite?
+        return if (@input_limit % 1).zero?
 
-        case @limit
+        # @input_limit is a decimal number
+        case @input_limit
         when 0...1
-          @window *= 1 / @limit
+          @window = @input_window / @input_limit
           @limit = 1
         when (1..)
-          if @window >= 2
-            @window *= @limit.floor / @limit
-            @limit = @limit.floor
+          if @input_window >= 2
+            @window = @input_window * @input_limit.floor / @input_limit
+            @limit = @input_limit.floor
           else
-            @window *= @limit.ceil / @limit
-            @limit = @limit.ceil
+            @window = @input_window * @input_limit.ceil / @input_limit
+            @limit = @input_limit.ceil
           end
         else
-          raise "invalid limit #{@limit}"
+          raise "invalid limit #{@input_limit}"
         end
 
         window_updated
