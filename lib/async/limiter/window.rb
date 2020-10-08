@@ -5,9 +5,13 @@ require_relative "constants"
 module Async
   module Limiter
     class Window
+      TYPES = %i[fixed sliding].freeze
+
       attr_reader :count
 
       attr_reader :limit
+
+      attr_reader :type
 
       attr_reader :waiting
 
@@ -17,11 +21,12 @@ module Async
 
       attr_reader :release_required
 
-      def initialize(limit = 1, window: 1, parent: nil,
+      def initialize(limit = 1, type: :fixed, window: 1, parent: nil,
         min_limit: MIN_WINDOW_LIMIT, max_limit: MAX_LIMIT,
         burstable: true, release_required: true)
         @count = 0
         @limit = limit
+        @type = type
         @window = window
         @parent = parent
         @max_limit = max_limit
@@ -200,6 +205,10 @@ module Async
 
         unless @limit.between?(@min_limit, @max_limit)
           raise ArgumentError, "limit not between min_limit and max_limit"
+        end
+
+        unless TYPES.include?(@type)
+          raise ArgumentError, "invalid type #{@type.inspect}"
         end
       end
     end
