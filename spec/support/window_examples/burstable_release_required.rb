@@ -95,10 +95,10 @@ RSpec.shared_examples :burstable_release_required do
               ["task 2 end", be_within(50).of(100)],
               ["task 3 start", be_within(50).of(1000)],
               ["task 3 end", be_within(50).of(1100)],
-              ["task 4 start", be_within(50).of(1000)],
-              ["task 4 end", be_within(50).of(1100)],
-              ["task 5 start", be_within(50).of(1000)],
-              ["task 5 end", be_within(50).of(1100)]
+              ["task 4 start", be_within(75).of(1000)],
+              ["task 4 end", be_within(75).of(1100)],
+              ["task 5 start", be_within(75).of(1000)],
+              ["task 5 end", be_within(75).of(1100)]
             )
           end
 
@@ -132,10 +132,10 @@ RSpec.shared_examples :burstable_release_required do
               ["task 2 end", be_within(50).of(1500)],
               ["task 3 start", be_within(50).of(1500)],
               ["task 3 end", be_within(50).of(3000)],
-              ["task 4 start", be_within(50).of(1500)],
-              ["task 4 end", be_within(50).of(3000)],
-              ["task 5 start", be_within(50).of(1500)],
-              ["task 5 end", be_within(50).of(3000)]
+              ["task 4 start", be_within(75).of(1500)],
+              ["task 4 end", be_within(75).of(3000)],
+              ["task 5 start", be_within(75).of(1500)],
+              ["task 5 end", be_within(75).of(3000)]
             )
           end
 
