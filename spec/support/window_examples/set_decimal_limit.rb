@@ -306,6 +306,14 @@ RSpec.shared_examples :set_decimal_limit_burstable do
         context "when window is 3" do
           let(:window) { 3 }
           let(:new_window) { window.to_f * new_limit.floor / new_limit }
+          # prevent intermittent spec failures
+          let(:next_fixed_window_start_time) do
+            # Whole number multiplier of both old and new window. By waiting
+            # for this window, both old and new window start at the same time.
+            window = 6
+            window_index = (Async::Clock.now / window).floor
+            window_index.next * window
+          end
 
           context "when starting limit is 1" do
             let(:limit) { 1 }
@@ -316,7 +324,7 @@ RSpec.shared_examples :set_decimal_limit_burstable do
               expect(new_window).to eq 2
 
               expect(task_stats).to contain_exactly(
-                ["task 0 start", 0],
+                ["task 0 start", be_within(10).of(0)],
                 ["task 0 end", be_within(50).of(100)],
                 # Limiter updated, effective limit is 1, window is 2.
                 ["task 1 start", be_within(50).of(2000)],
@@ -341,11 +349,11 @@ RSpec.shared_examples :set_decimal_limit_burstable do
               expect(new_window).to eq 2
 
               expect(task_stats).to contain_exactly(
-                ["task 0 start", 0],
+                ["task 0 start", be_within(10).of(0)],
                 ["task 0 end", be_within(50).of(100)],
-                ["task 1 start", 0],
+                ["task 1 start", be_within(10).of(0)],
                 ["task 1 end", be_within(50).of(100)],
-                ["task 2 start", 0],
+                ["task 2 start", be_within(10).of(0)],
                 ["task 2 end", be_within(50).of(100)],
                 # Limiter updated, effective limit is 1, window is 2.
                 ["task 3 start", be_within(50).of(2000)],
