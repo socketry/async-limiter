@@ -7,7 +7,6 @@ module Async
     class Window
       TYPES = %i[fixed sliding].freeze
       NULL_TIME = -1
-      NULL_INDEX = -1
 
       attr_reader :count
 
@@ -25,12 +24,12 @@ module Async
         @burstable = burstable
         @lock = lock
 
-        @acquired_times = []
         @waiting = []
         @scheduler_task = nil
-        @last_acquired_time = NULL_TIME
 
-        @acquired_window_indexes = []
+        @window_frame_start_time = NULL_TIME
+        @window_start_time = NULL_TIME
+        @window_count = 0
 
         update_concurrency
         validate!
@@ -61,14 +60,24 @@ module Async
         wait
         @count += 1
 
-        @acquired_times.unshift(Clock.now)
-        @acquired_times = @acquired_times.first(@limit)
-        @last_acquired_time = Clock.now
+        current_time = Clock.now
 
-        if fixed?
-          @acquired_window_indexes.unshift(window_index)
-          @acquired_window_indexes = @acquired_window_indexes.first(@limit)
+        if window_changed?(current_time)
+          @window_start_time =
+            if @type == :sliding
+              current_time
+            elsif @type == :fixed
+              (current_time / @window).to_i * @window
+            else
+              raise "invalid type #{@type}"
+            end
+
+          @window_count = 1
+        else
+          @window_count += 1
         end
+
+        @window_frame_start_time = current_time
       end
 
       def release
@@ -98,8 +107,26 @@ module Async
         @lock && @count >= @limit
       end
 
+      def window_blocking?
+        return false unless @burstable
+        return false if window_changed?
+
+        @window_count >= @limit
+      end
+
       def window_frame_blocking?
-        !@burstable && next_window_frame_start_time > Clock.now
+        return false if @burstable
+        return false if window_frame_changed?
+
+        true
+      end
+
+      def window_changed?(time = Clock.now)
+        @window_start_time + @window <= time
+      end
+
+      def window_frame_changed?
+        @window_frame_start_time + window_frame <= Clock.now
       end
 
       def wait
@@ -120,11 +147,10 @@ module Async
         raise
       end
 
-      def reschedule
-        @scheduler_task.stop
-        @scheduler_task = nil
-
-        schedule
+      def schedule?
+        @scheduler_task.nil? &&
+          @waiting.any? &&
+          !limit_blocking?
       end
 
       # Schedule resuming waiting tasks.
@@ -132,7 +158,7 @@ module Async
         @scheduler_task ||=
           parent.async { |task|
             while @waiting.any? && !limit_blocking?
-              delay = delay(next_acquire_time)
+              delay = [next_acquire_time - Async::Clock.now, 0].max
               task.sleep(delay) if delay.positive?
               resume_waiting
             end
@@ -141,8 +167,17 @@ module Async
           }
       end
 
-      def delay(time)
-        [time - Async::Clock.now, 0].max
+      def reschedule?
+        @scheduler_task &&
+          @waiting.any? &&
+          !limit_blocking?
+      end
+
+      def reschedule
+        @scheduler_task.stop
+        @scheduler_task = nil
+
+        schedule
       end
 
       def resume_waiting
@@ -155,16 +190,16 @@ module Async
         schedule if schedule?
       end
 
-      def reschedule?
-        @scheduler_task &&
-          @waiting.any? &&
-          !limit_blocking?
+      def next_acquire_time
+        if @burstable
+          @window_start_time + @window # next window start time
+        else
+          @window_frame_start_time + window_frame # next window frame start time
+        end
       end
 
-      def schedule?
-        @scheduler_task.nil? &&
-          @waiting.any? &&
-          !limit_blocking?
+      def window_frame
+        @window.to_f / @limit
       end
 
       # If limit is a decimal number (e.g. 0.5) it needs to be adjusted.
@@ -194,66 +229,8 @@ module Async
           raise "invalid limit #{@input_limit}"
         end
 
-        window_updated
         resume_waiting
         reschedule if reschedule?
-      end
-
-      def next_window_frame_start_time
-        window_frame = @window.to_f / @limit
-        @last_acquired_time + window_frame
-      end
-
-      def next_acquire_time
-        if @burstable
-          next_window_start_time
-        else
-          next_window_frame_start_time
-        end
-      end
-
-      def fixed?
-        @type == :fixed
-      end
-
-      def sliding?
-        @type == :sliding
-      end
-
-      def window_updated
-        if fixed?
-          @acquired_window_indexes = @acquired_times.map(&method(:window_index))
-        end
-      end
-
-      def window_blocking?
-        return false unless @burstable
-
-        if fixed?
-          first_index_in_limit_scope =
-            @acquired_window_indexes.fetch(@limit - 1, NULL_INDEX)
-          first_index_in_limit_scope == window_index
-        elsif sliding?
-          next_window_start_time > Clock.now
-        else
-          raise "invalid type #{@type}"
-        end
-      end
-
-      def next_window_start_time
-        if fixed?
-          window_index.next * @window
-        elsif sliding?
-          first_time_in_limit_scope =
-            @acquired_times.fetch(@limit - 1, NULL_TIME)
-          first_time_in_limit_scope + @window
-        else
-          raise "invalid type #{@type}"
-        end
-      end
-
-      def window_index(time = Clock.now)
-        (time / @window).floor
       end
 
       def validate!
