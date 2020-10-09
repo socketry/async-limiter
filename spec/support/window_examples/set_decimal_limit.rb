@@ -218,6 +218,14 @@ RSpec.shared_examples :set_decimal_limit_burstable do
             let(:limit) { 1 }
             let(:repeats) { 5 }
             let(:update_limit_after) { 0.5 }
+            # prevent intermittent spec failures
+            let(:next_fixed_window_start_time) do
+              # Multiplier of both 2 and 1.33 (old and new window). By waiting
+              # for this window, both old and new window start at the same time.
+              window = 4
+              window_index = (Async::Clock.now / window).floor
+              window_index.next * window
+            end
 
             it "changes effective limit to 2 and window to 1.33" do
               expect(new_window.truncate(2)).to eq 1.33
@@ -226,13 +234,12 @@ RSpec.shared_examples :set_decimal_limit_burstable do
                 ["task 0 start", 0],
                 ["task 0 end", be_within(50).of(100)],
                 # Limiter updated, effective limit is 2, window is 1.33.
-                # Running 2nd task unpredictably in 1st 1.33 window.
-                ["task 1 start", be_within(1333 + 50).of(0)],
-                ["task 1 end", be_within(1333 + 50).of(0 + 100)],
+                ["task 1 start", be_within(50).of(1333)],
+                ["task 1 end", be_within(50).of(1333 + 100)],
                 ["task 2 start", be_within(50).of(1333)],
                 ["task 2 end", be_within(50).of(1333 + 100)],
-                ["task 3 start", be_within(50).of(1333)],
-                ["task 3 end", be_within(50).of(1333 + 100)],
+                ["task 3 start", be_within(50).of(2666)],
+                ["task 3 end", be_within(50).of(2666 + 100)],
                 ["task 4 start", be_within(50).of(2666)],
                 ["task 4 end", be_within(50).of(2666 + 100)]
               )
@@ -248,6 +255,14 @@ RSpec.shared_examples :set_decimal_limit_burstable do
             let(:limit) { 3 }
             let(:repeats) { 9 }
             let(:update_limit_after) { 0.5 }
+            # prevent intermittent spec failures
+            let(:next_fixed_window_start_time) do
+              # Multiplier of both 2 and 1.33 (old and new window). By waiting
+              # for this window, both old and new window start at the same time.
+              window = 4
+              window_index = (Async::Clock.now / window).floor
+              window_index.next * window
+            end
 
             it "changes effective limit to 2 and window to 1.33" do
               expect(new_window.truncate(2)).to eq 1.33
@@ -260,19 +275,18 @@ RSpec.shared_examples :set_decimal_limit_burstable do
                 ["task 2 start", 0],
                 ["task 2 end", be_within(50).of(100)],
                 # Limiter updated, effective limit is 2, window is 1.33.
-                # Running 2nd batch of tasks unpredictably in 1st 1.33 window.
-                ["task 3 start", be_within(1333 + 50).of(0)],
-                ["task 3 end", be_within(1333 + 50).of(0 + 100)],
-                ["task 4 start", be_within(1333 + 50).of(0)],
-                ["task 4 end", be_within(1333 + 50).of(0 + 100)],
-                ["task 5 start", be_within(1333 + 50).of(0)],
-                ["task 5 end", be_within(1333 + 50).of(0 + 100)],
-                ["task 6 start", be_within(50).of(1333)],
-                ["task 6 end", be_within(50).of(1333 + 100)],
-                ["task 7 start", be_within(50).of(1333)],
-                ["task 7 end", be_within(50).of(1333 + 100)],
-                ["task 8 start", be_within(50).of(2666)],
-                ["task 8 end", be_within(50).of(2666 + 100)]
+                ["task 3 start", be_within(50).of(1333)],
+                ["task 3 end", be_within(50).of(1333 + 100)],
+                ["task 4 start", be_within(50).of(1333)],
+                ["task 4 end", be_within(50).of(1333 + 100)],
+                ["task 5 start", be_within(50).of(2666)],
+                ["task 5 end", be_within(50).of(2666 + 100)],
+                ["task 6 start", be_within(50).of(2666)],
+                ["task 6 end", be_within(50).of(2666 + 100)],
+                ["task 7 start", be_within(50).of(3999)],
+                ["task 7 end", be_within(50).of(3999 + 100)],
+                ["task 8 start", be_within(50).of(3999)],
+                ["task 8 end", be_within(50).of(3999 + 100)]
               )
 
               expect(limiter).to have_attributes(
@@ -290,7 +304,7 @@ RSpec.shared_examples :set_decimal_limit_burstable do
           context "when starting limit is 1" do
             let(:limit) { 1 }
             let(:repeats) { 3 }
-            let(:update_limit_after) { 1 }
+            let(:update_limit_after) { 0.5 }
 
             it "changes effective limit to 1 and window to 2" do
               expect(new_window).to eq 2
@@ -315,7 +329,7 @@ RSpec.shared_examples :set_decimal_limit_burstable do
           context "when starting limit is 3" do
             let(:limit) { 3 }
             let(:repeats) { 5 }
-            let(:update_limit_after) { 1 }
+            let(:update_limit_after) { 0.5 }
 
             it "changes effective limit to 1 and window to 2" do
               expect(new_window).to eq 2
