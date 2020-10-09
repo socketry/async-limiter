@@ -175,20 +175,24 @@ end
 
 RSpec.shared_examples :window_limiter do
   def next_fixed_window_start_time
-    # Prevent intermittent failures in specs that change window.
-    window = defined?(new_window) ? new_window : limiter.window
     limit = limiter.limit
+    window = limiter.window
 
     # Logic from #update_concurrency
     real_window =
-      case limit
-      when 0...1
-        window / limit
-      when (1..)
-        if window >= 2
-          window * limit.floor / limit
-        else
-          window * limit.ceil / limit
+      if defined?(new_window)
+        # Prevent intermittent failures in specs that change window.
+        new_window
+      else
+        case limit
+        when 0...1
+          window / limit
+        when (1..)
+          if window >= 2
+            window * limit.floor / limit
+          else
+            window * limit.ceil / limit
+          end
         end
       end
 
