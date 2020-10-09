@@ -137,9 +137,15 @@ RSpec.shared_examples :set_decimal_limit_burstable do
     context "while existing tasks run" do
       let(:task_duration) { 0.1 }
 
+      require "async/limiter/window/fixed"
+
       before do # must run before :async_processing context
         Async::Task.current.async do |task|
-          delay = next_fixed_window_start_time - Async::Clock.now
+          delay = if described_class == Async::Limiter::Window::Fixed
+            next_fixed_window_start_time - Async::Clock.now
+          else
+            0
+          end
           task.sleep(delay + update_limit_after)
           limiter.limit = new_limit
         end

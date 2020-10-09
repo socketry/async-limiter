@@ -195,6 +195,7 @@ module Async
         end
 
         window_updated
+        resume_waiting
         reschedule if reschedule?
       end
 
