@@ -176,7 +176,7 @@ end
 RSpec.shared_examples :window_limiter do
   def next_fixed_window_start_time
     # Prevent intermittent failures in specs that change window.
-    window = defined?(:new_window) ? new_window : limiter.window
+    window = defined?(new_window) ? new_window : limiter.window
     limit = limiter.limit
 
     # Logic from #update_concurrency

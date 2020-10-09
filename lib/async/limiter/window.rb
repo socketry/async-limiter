@@ -28,7 +28,6 @@ module Async
         @acquired_times = []
         @waiting = []
         @scheduler_task = nil
-        @scheduled = true
         @last_acquired_time = NULL_TIME
 
         @acquired_window_indexes = []
@@ -121,6 +120,13 @@ module Async
         raise
       end
 
+      def reschedule
+        @scheduler_task.stop
+        @scheduler_task = nil
+
+        schedule
+      end
+
       # Schedule resuming waiting tasks.
       def schedule(parent: @parent || Task.current)
         @scheduler_task ||=
@@ -149,9 +155,14 @@ module Async
         schedule if schedule?
       end
 
+      def reschedule?
+        @scheduler_task &&
+          @waiting.any? &&
+          !limit_blocking?
+      end
+
       def schedule?
-        @scheduled &&
-          @scheduler_task.nil? &&
+        @scheduler_task.nil? &&
           @waiting.any? &&
           !limit_blocking?
       end
@@ -184,6 +195,7 @@ module Async
         end
 
         window_updated
+        reschedule if reschedule?
       end
 
       def next_window_frame_start_time
