@@ -240,12 +240,12 @@ RSpec.shared_examples :set_decimal_limit_burstable do
                 ["task 0 start", 0],
                 ["task 0 end", be_within(50).of(100)],
                 # Limiter updated, effective limit is 2, window is 1.33.
-                ["task 1 start", be_within(50).of(1333)],
-                ["task 1 end", be_within(50).of(1333 + 100)],
+                ["task 1 start", be_within(50).of(500)],
+                ["task 1 end", be_within(50).of(600)],
                 ["task 2 start", be_within(50).of(1333)],
                 ["task 2 end", be_within(50).of(1333 + 100)],
-                ["task 3 start", be_within(50).of(2666)],
-                ["task 3 end", be_within(50).of(2666 + 100)],
+                ["task 3 start", be_within(50).of(1333)],
+                ["task 3 end", be_within(50).of(1333 + 100)],
                 ["task 4 start", be_within(50).of(2666)],
                 ["task 4 end", be_within(50).of(2666 + 100)]
               )
