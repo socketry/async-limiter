@@ -3,8 +3,6 @@ require_relative "constants"
 
 module Async
   module Limiter
-    # Allows running x units of work concurrently.
-    # Has the same logic as Async::Semaphore.
     class Concurrent
       attr_reader :count
 
