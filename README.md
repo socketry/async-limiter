@@ -219,6 +219,30 @@ All 100 tasks in the example above start immediately and run at the same time.
 
 The total duration of the above example is 1s.
 
+### Updating `limit`
+
+All limiters except `Async::Limiter::Unlimited` have `#limit=`. It allows
+live updating of the `limit`. Just set a new value and limiter will do the
+right thing while it actively runs existing tasks.
+
+**Decimal values**
+
+Setting `limit` to decimal values is allowed. Examples:
+
+- Set limit to 0.5 and window to 1.
+- Set limit to 1.5 and window to 2.5.
+
+Since decimal value for a limit  doesn't make sense (how do you run half a task
+per second?), decimal limit is internally always converted to a whole number
+and window is adjusted appriately. So half a task per second actually runs as
+one task in two seconds.
+
+### Updating `window`
+
+All window limiters have `#window=`. It allows live updating of the `window`.
+Just set a new value and limiter will do the right thing while it actively runs
+existing tasks.
+
 ### Maintenance
 
 This project is maintained actively, but on a slow schedule. Due to author's
