@@ -90,14 +90,22 @@ module Async
       def limit=(new_limit)
         validate_limit!(new_limit)
         @input_limit = @limit = new_limit
+
         update_concurrency
+        resume_waiting
+        reschedule if reschedule?
+
         limit
       end
 
       def window=(new_window)
         validate_window!(new_window)
         @input_window = @window = new_window
+
         update_concurrency
+        resume_waiting
+        reschedule if reschedule?
+
         window
       end
 
@@ -228,9 +236,6 @@ module Async
         else
           raise "invalid limit #{@input_limit}"
         end
-
-        resume_waiting
-        reschedule if reschedule?
       end
 
       def validate!
