@@ -8,10 +8,10 @@ module Async
 
       attr_reader :limit
 
-      def initialize(limit = 1, parent: nil)
+      def initialize(limit = 1, parent: nil, queue: [])
         @count = 0
         @limit = limit
-        @waiting = []
+        @waiting = queue
         @parent = parent
 
         validate!

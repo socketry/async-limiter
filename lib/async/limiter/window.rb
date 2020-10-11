@@ -15,7 +15,7 @@ module Async
       attr_reader :lock
 
       def initialize(limit = 1, type: :fixed, window: 1, parent: nil,
-        burstable: true, lock: true)
+        burstable: true, lock: true, queue: [])
         @count = 0
         @input_limit = @limit = limit
         @type = type
@@ -24,7 +24,7 @@ module Async
         @burstable = burstable
         @lock = lock
 
-        @waiting = []
+        @waiting = queue
         @scheduler_task = nil
 
         @window_frame_start_time = NULL_TIME
