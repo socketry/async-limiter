@@ -78,6 +78,14 @@ module Async
         end
 
         @window_frame_start_time = current_time
+
+        return unless block_given?
+
+        begin
+          yield
+        ensure
+          release
+        end
       end
 
       def release
