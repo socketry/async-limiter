@@ -30,9 +30,21 @@ module Async
         end
       end
 
+      def sync(*queue_args, &block)
+        acquire(*queue_args, &block)
+      end
+
       def acquire(*queue_args)
         wait(*queue_args)
         @count += 1
+
+        return unless block_given?
+
+        begin
+          yield
+        ensure
+          release
+        end
       end
 
       def release
