@@ -21,8 +21,8 @@ module Async
         limit_blocking?
       end
 
-      def async(parent: (@parent || Task.current), **options)
-        acquire
+      def async(*queue_args, parent: (@parent || Task.current), **options)
+        acquire(*queue_args)
         parent.async(**options) do |task|
           yield task
         ensure
@@ -30,8 +30,8 @@ module Async
         end
       end
 
-      def acquire
-        wait
+      def acquire(*queue_args)
+        wait(*queue_args)
         @count += 1
       end
 
@@ -53,11 +53,11 @@ module Async
         @count >= @limit
       end
 
-      def wait
+      def wait(*queue_args)
         fiber = Fiber.current
 
         if blocking?
-          @waiting << fiber
+          @waiting.push(fiber, *queue_args) # queue_args used for custom queues
           Task.yield while blocking?
         end
       rescue Exception # rubocop:disable Lint/RescueException

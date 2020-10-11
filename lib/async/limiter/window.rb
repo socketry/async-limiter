@@ -47,8 +47,8 @@ module Async
         limit_blocking? || window_blocking? || window_frame_blocking?
       end
 
-      def async(parent: (@parent || Task.current), **options)
-        acquire
+      def async(*queue_args, parent: (@parent || Task.current), **options)
+        acquire(*queue_args)
         parent.async(**options) do |task|
           yield task
         ensure
@@ -56,8 +56,8 @@ module Async
         end
       end
 
-      def acquire
-        wait
+      def acquire(*queue_args)
+        wait(*queue_args)
         @count += 1
 
         current_time = Clock.now
@@ -145,13 +145,13 @@ module Async
         @window_frame_start_time + window_frame <= Clock.now
       end
 
-      def wait
+      def wait(*queue_args)
         fiber = Fiber.current
 
         # @waiting.any? check prevents fibers resumed via scheduler from
         # slipping in operations before other waiting fibers get resumed.
         if blocking? || @waiting.any?
-          @waiting << fiber
+          @waiting.push(fiber, *queue_args) # queue_args used for custom queues
           schedule if schedule?
           loop do
             Task.yield # run this line at least once
