@@ -6,6 +6,8 @@ RSpec.describe Async::Limiter::Unlimited do
   include_examples :chainable_async
   include_examples :barrier
   include_examples :count
+  include_examples :sync
+  include_examples :acquire_with_block
 
   describe "#async" do
     include_context :async_processing

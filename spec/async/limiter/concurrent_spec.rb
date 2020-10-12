@@ -12,6 +12,9 @@ RSpec.describe Async::Limiter::Concurrent do
   include_examples :limit=
   include_examples :barrier
   include_examples :count
+  include_examples :sync
+  include_examples :acquire_with_block
+  include_examples :custom_queue
 
   describe "#async" do
     include_context :async_processing

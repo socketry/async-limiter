@@ -195,6 +195,9 @@ RSpec.shared_examples :window_limiter do
   include_examples :window=
   include_examples :barrier
   include_examples :count
+  include_examples :sync
+  include_examples :acquire_with_block
+  include_examples :custom_queue
 end
 
 RSpec.shared_context :async_processing do
@@ -294,6 +297,117 @@ RSpec.shared_context :blocking_contexts do
     before do
       limit.times { limiter.acquire }
       wait_until_next_window
+    end
+  end
+end
+
+RSpec.shared_examples :sync do
+  describe "#sync" do
+    context "without a block" do
+      it "raises an error" do
+        expect {
+          limiter.sync
+        }.to raise_error(LocalJumpError)
+      end
+    end
+
+    context "with a block" do
+      attr_accessor :value
+
+      before do
+        self.value = nil
+
+        limiter.sync do
+          Async::Task.current.sleep(0.01)
+          self.value = "value"
+        end
+      end
+
+      it "performs the work synchronously" do
+        expect(value).to eq "value"
+      end
+    end
+  end
+end
+
+RSpec.shared_examples :acquire_with_block do
+  describe "#acquire with a block" do
+    attr_accessor :value
+
+    before do
+      self.value = nil
+
+      limiter.acquire do
+        Async::Task.current.sleep(0.01)
+        self.value = "value"
+      end
+    end
+
+    it "performs the work synchronously" do
+      expect(value).to eq "value"
+    end
+  end
+end
+
+RSpec.shared_examples :custom_queue do
+  context "with a custom queue" do
+    let(:repeats) { 4 }
+    let(:task_duration) { 0.1 }
+    let(:result) { [] }
+
+    subject(:limiter) do
+      described_class.new(limit, queue: NaivePriorityQueue.new)
+    end
+
+    shared_examples :runs_tasks_based_on_priority do
+      it "runs tasks based on the priority" do
+        expect(result).to eq [0, 3, 2, 1]
+      end
+    end
+
+    describe "#async" do
+      before do
+        repeats.times.map { |i|
+          Async::Task.current.async do
+            limiter.async(i) { |task|
+              task.sleep(task_duration)
+              result << i
+            }.wait
+          end
+        }.map(&:wait)
+      end
+
+      include_examples :runs_tasks_based_on_priority
+    end
+
+    describe "#sync" do
+      before do
+        repeats.times.map { |i|
+          Async::Task.current.async do
+            limiter.sync(i) do |task|
+              task.sleep(task_duration)
+              result << i
+            end
+          end
+        }.map(&:wait)
+      end
+
+      include_examples :runs_tasks_based_on_priority
+    end
+
+    describe "#acquire" do
+      before do
+        repeats.times.map { |i|
+          Async::Task.current.async do |task|
+            limiter.acquire(i)
+            task.sleep(task_duration)
+            result << i
+            limiter.release
+          end
+        }.map(&:wait)
+      end
+
+      include_examples :runs_tasks_based_on_priority
     end
   end
 end
