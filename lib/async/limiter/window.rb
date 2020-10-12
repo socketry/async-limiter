@@ -56,8 +56,10 @@ module Async
         end
       end
 
-      def sync(*queue_args, &block)
-        acquire(*queue_args, &block)
+      def sync(*queue_args)
+        acquire(*queue_args) do
+          yield(@parent || Task.current)
+        end
       end
 
       def acquire(*queue_args)
