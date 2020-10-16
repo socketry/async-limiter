@@ -179,6 +179,8 @@ module Async
       def schedule(parent: @parent || Task.current)
         @scheduler_task ||=
           parent.async { |task|
+            task.annotate("scheduling tasks for #{self.class}.")
+
             while @waiting.any? && !limit_blocking?
               delay = [next_acquire_time - Async::Clock.now, 0].max
               task.sleep(delay) if delay.positive?
