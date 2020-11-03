@@ -178,7 +178,7 @@ module Async
       # Schedule resuming waiting tasks.
       def schedule(parent: @parent || Task.current)
         @scheduler ||=
-          parent.async { |task|
+          parent.async(transient: true) { |task|
             task.annotate("scheduling tasks for #{self.class}.")
 
             while @waiting.any? && !limit_blocking?
