@@ -25,7 +25,7 @@ module Async
         @lock = lock
 
         @waiting = queue
-        @scheduler_task = nil
+        @scheduler = nil
 
         @window_frame_start_time = NULL_TIME
         @window_start_time = NULL_TIME
@@ -170,14 +170,14 @@ module Async
       end
 
       def schedule?
-        @scheduler_task.nil? &&
+        @scheduler.nil? &&
           @waiting.any? &&
           !limit_blocking?
       end
 
       # Schedule resuming waiting tasks.
       def schedule(parent: @parent || Task.current)
-        @scheduler_task ||=
+        @scheduler ||=
           parent.async { |task|
             task.annotate("scheduling tasks for #{self.class}.")
 
@@ -187,19 +187,19 @@ module Async
               resume_waiting
             end
 
-            @scheduler_task = nil
+            @scheduler = nil
           }
       end
 
       def reschedule?
-        @scheduler_task &&
+        @scheduler &&
           @waiting.any? &&
           !limit_blocking?
       end
 
       def reschedule
-        @scheduler_task.stop
-        @scheduler_task = nil
+        @scheduler.stop
+        @scheduler = nil
 
         schedule
       end
