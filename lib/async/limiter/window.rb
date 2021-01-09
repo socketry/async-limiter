@@ -58,7 +58,7 @@ module Async
 
       def sync(*queue_args)
         acquire(*queue_args) do
-          yield(@parent || Task.current)
+          yield Task.current
         end
       end
 
@@ -177,18 +177,20 @@ module Async
 
       # Schedule resuming waiting tasks.
       def schedule(parent: @parent || Task.current)
-        @scheduler ||=
-          parent.async(transient: true) { |task|
-            task.annotate("scheduling tasks for #{self.class}.")
+        return @scheduler if @scheduler
 
-            while @waiting.any? && !limit_blocking?
-              delay = [next_acquire_time - Clock.now, 0].max
-              task.sleep(delay) if delay.positive?
-              resume_waiting
-            end
+        parent.async(transient: true) do |task|
+          @scheduler = task
+          task.annotate("scheduling tasks for #{self.class}.")
 
-            @scheduler = nil
-          }
+          while @waiting.any? && !limit_blocking?
+            delay = [next_acquire_time - Clock.now, 0].max
+            task.sleep(delay) if delay.positive?
+            resume_waiting
+          end
+        ensure
+          @scheduler = nil
+        end
       end
 
       def reschedule?
