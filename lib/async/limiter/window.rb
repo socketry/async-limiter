@@ -1,4 +1,5 @@
 require "async/clock"
+require "async/notification"
 require "async/task"
 require_relative "constants"
 
@@ -26,6 +27,8 @@ module Async
 
         @waiting = queue
         @scheduler = nil
+        @yield_wait = false
+        @yield_notification = Notification.new
 
         @window_frame_start_time = NULL_TIME
         @window_start_time = NULL_TIME
@@ -158,7 +161,14 @@ module Async
         # slipping in operations before other waiting fibers get resumed.
         if blocking? || @waiting.any?
           @waiting.push(fiber, *queue_args) # queue_args used for custom queues
+          @yield_wait = true
           schedule if schedule?
+
+          # Non-blocking signal, prevents race condition where scheduler would
+          # start resuming waiting fibers before below 'Task.yield' was reached.
+          @yield_notification.signal
+          @yield_wait = false # we're out of the woods
+
           loop do
             Task.yield # run this line at least once
             break unless blocking?
@@ -186,6 +196,11 @@ module Async
           while @waiting.any? && !limit_blocking?
             delay = [next_acquire_time - Clock.now, 0].max
             task.sleep(delay) if delay.positive?
+
+            # Waits for the task that started the scheduler to yield.
+            # See #wait for more details.
+            @yield_wait && @yield_notification&.wait
+
             resume_waiting
           end
         ensure
