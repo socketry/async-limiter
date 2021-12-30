@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.homepage = "https://github.com/bruno-/async-limiter"
   s.license = "MIT"
 
-  s.add_dependency "async", "~> 1.27"
+  s.add_dependency "async", ">= 1.27", "< 3.0"
 
   s.add_development_dependency "async-rspec", "~> 1.15"
   s.add_development_dependency "rspec", "~> 3.10"
