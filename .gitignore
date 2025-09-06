@@ -1,3 +1,7 @@
-gems.locked
-spec/examples.txt
-tmp/
+/agents.md
+/.context
+/.bundle
+/pkg
+/gems.locked
+/.covered.db
+/external

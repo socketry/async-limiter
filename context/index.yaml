@@ -1,0 +1,12 @@
+# Automatically generated context index for Utopia::Project guides.
+# Do not edit then files in this directory directly, instead edit the guides and then run `bake utopia:project:agent:context:update`.
+---
+description: Execution rate limiting for Async
+metadata:
+  documentation_uri: https://socketry.github.io/async-limiter/
+  source_code_uri: https://github.com/socketry/async-limiter.git
+files:
+- path: getting-started.md
+  title: Getting Started
+  description: This guide explains how to get started with `async-limiter` for controlling
+    concurrency and rate limiting in Ruby applications.
