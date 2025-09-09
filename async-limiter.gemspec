@@ -1,21 +1,25 @@
+# frozen_string_literal: true
+
 require_relative "lib/async/limiter/version"
 
-Gem::Specification.new do |s|
-  s.name = "async-limiter"
-  s.version = Async::Limiter::VERSION
-  s.summary = "Async limiters"
-  s.author = "Bruno Sutic"
-  s.email = "code@brunosutic.com"
-  s.require_paths = %w[lib]
-  s.files = Dir["lib/**/*"]
-  s.required_ruby_version = ">= 2.7.0"
-  s.homepage = "https://github.com/bruno-/async-limiter"
-  s.license = "MIT"
-
-  s.add_dependency "async", ">= 1.27", "< 3.0"
-
-  s.add_development_dependency "async-rspec", "~> 1.15"
-  s.add_development_dependency "rspec", "~> 3.10"
-  s.add_development_dependency "rubocop-rspec", "~> 2.0"
-  s.add_development_dependency "standard", "~> 0.9"
+Gem::Specification.new do |spec|
+	spec.name = "async-limiter"
+	spec.version = Async::Limiter::VERSION
+	
+	spec.summary = "Execution rate limiting for Async"
+	spec.authors = ["Bruno Sutic", "Samuel Williams"]
+	spec.license = "MIT"
+	
+	spec.homepage = "https://github.com/bruno-/async-limiter"
+	
+	spec.metadata = {
+		"documentation_uri" => "https://socketry.github.io/async-limiter/",
+		"source_code_uri" => "https://github.com/socketry/async-limiter.git",
+	}
+	
+	spec.files = Dir["{lib}/**/*", "*.md", base: __dir__]
+	
+	spec.required_ruby_version = ">= 3.2"
+	
+	spec.add_dependency "async"
 end
