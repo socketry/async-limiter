@@ -23,9 +23,8 @@ module Async
 			# @parameter parent [Async::Task, nil] Parent task for creating child tasks.
 			# @raises [ArgumentError] If limit is not positive.
 			def initialize(limit = 1, timing: Timing::None, parent: nil)
-				raise ArgumentError, "Limit must be positive!" unless limit.positive?
-				
 				super(timing: timing, parent: parent)
+
 				@limit = limit
 				@count = 0
 				
@@ -56,11 +55,10 @@ module Async
 			# @parameter new_limit [Integer] The new maximum number of concurrent tasks.
 			# @raises [ArgumentError] If new_limit is not positive.
 			def limit=(new_limit)
-				raise ArgumentError, "Limit must be positive!" unless new_limit.positive?
-				
 				@mutex.synchronize do
 					old_limit = @limit
 					@limit = new_limit
+					
 					# Wake up waiting tasks if limit increased:
 					@available.broadcast if new_limit > old_limit
 				end

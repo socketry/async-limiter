@@ -34,13 +34,6 @@ describe Async::Limiter::Limited do
 				
 				limiter.limit = 5
 				expect(limiter.limit).to be == 5
-				
-				expect do
-					limiter.limit = 0
-				end.to raise_exception(ArgumentError)
-				expect do
-					limiter.limit = -1
-				end.to raise_exception(ArgumentError)
 			end
 		end
 		
