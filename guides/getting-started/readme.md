@@ -1,6 +1,6 @@
 # Getting Started
 
-This guide explains how to get started with `async-limiter` for controlling concurrency and rate limiting in Ruby applications.
+This guide explains how to get started the `async-limiter` gem for controlling concurrency and rate limiting in Ruby applications.
 
 ## Installation
 
@@ -38,15 +38,15 @@ require "async"
 require "async/limiter"
 
 Async do
-  limiter = Async::Limiter::Generic.new
-  
-  # All tasks run concurrently:
-  100.times do |i|
-    limiter.async do |task|
-      puts "Task #{i} running"
-      task.sleep 1
-    end
-  end
+	limiter = Async::Limiter::Generic.new
+	
+	# All tasks run concurrently:
+	100.times do |i|
+		limiter.async do |task|
+			puts "Task #{i} running"
+			task.sleep 1
+		end
+	end
 end
 ```
 
@@ -60,15 +60,15 @@ require "async/limiter"
 
 Async do
 	# Max 2 concurrent tasks:
-  limiter = Async::Limiter::Limited.new(2)
-  
-  4.times do |i|
-    limiter.async do |task|
-      puts "Task #{i} started"
-      task.sleep 1
-      puts "Task #{i} finished"
-    end
-  end
+	limiter = Async::Limiter::Limited.new(2)
+	
+	4.times do |i|
+		limiter.async do |task|
+			puts "Task #{i} started"
+			task.sleep 1
+			puts "Task #{i} finished"
+		end
+	end
 end
 ```
 
@@ -84,24 +84,24 @@ require "async/limiter"
 require "async/queue"
 
 Async do
-  # Pre-populate queue with database connections
-  queue = Async::Queue.new
-  queue.push("connection_1")
-  queue.push("connection_2") 
-  queue.push("connection_3")
-  
-  limiter = Async::Limiter::Queued.new(queue)
-  
-  5.times do |i|
-    limiter.async do |task|
-      # Automatically gets an available connection
-      limiter.acquire do |connection|
-        puts "Task #{i} using #{connection}"
-        task.sleep 1
-        # Connection automatically returned to queue
-      end
-    end
-  end
+	# Pre-populate queue with database connections
+	queue = Async::Queue.new
+	queue.push("connection_1")
+	queue.push("connection_2") 
+	queue.push("connection_3")
+	
+	limiter = Async::Limiter::Queued.new(queue)
+	
+	5.times do |i|
+		limiter.async do |task|
+			# Automatically gets an available connection
+			limiter.acquire do |connection|
+				puts "Task #{i} using #{connection}"
+				task.sleep 1
+				# Connection automatically returned to queue
+			end
+		end
+	end
 end
 ```
 
@@ -127,7 +127,7 @@ return "timeout" unless resource
 
 # With blocks (automatic cleanup)
 limiter.acquire(timeout: 1.0) do |resource|
-  # Use resource
+	# Use resource
 end  # Automatically released
 ```
 
@@ -143,21 +143,21 @@ require "async"
 require "async/limiter"
 
 Async do
-  # Max 3 tasks within any 1-second sliding window
-  timing = Async::Limiter::Timing::SlidingWindow.new(
-    1.0,                                             # 1-second window
-    Async::Limiter::Timing::BurstStrategy::Greedy,   # Allow bursting
-    3                                                # 3 tasks per window
-  )
-  
-  limiter = Async::Limiter::Limited.new(10, timing: timing)
-  
-  10.times do |i|
-    limiter.async do |task|
-      puts "Task #{i} started at #{Time.now}"
-      task.sleep 0.5
-    end
-  end
+	# Max 3 tasks within any 1-second sliding window
+	timing = Async::Limiter::Timing::SlidingWindow.new(
+		1.0,                                             # 1-second window
+		Async::Limiter::Timing::BurstStrategy::Greedy,   # Allow bursting
+		3                                                # 3 tasks per window
+	)
+	
+	limiter = Async::Limiter::Limited.new(10, timing: timing)
+	
+	10.times do |i|
+		limiter.async do |task|
+			puts "Task #{i} started at #{Time.now}"
+			task.sleep 0.5
+		end
+	end
 end
 ```
 
@@ -168,9 +168,9 @@ Discrete time boundaries:
 ```ruby
 # Max 5 tasks per 2-second window with fixed boundaries
 timing = Async::Limiter::Timing::FixedWindow.new(
-  2.0,                                             # 2-second windows
-  Async::Limiter::Timing::BurstStrategy::Greedy,   # Allow bursting
-  5                                                # 5 tasks per window
+	2.0,                                             # 2-second windows
+	Async::Limiter::Timing::BurstStrategy::Greedy,   # Allow bursting
+	5                                                # 5 tasks per window
 )
 
 limiter = Async::Limiter::Limited.new(10, timing: timing)
@@ -183,8 +183,8 @@ Smooth rate limiting with token consumption:
 ```ruby
 # 10 tokens per second, bucket capacity of 50 tokens
 timing = Async::Limiter::Timing::LeakyBucket.new(
-  10.0,  # 10 tokens/second leak rate
-  50.0   # 50 token capacity
+	10.0,  # 10 tokens/second leak rate
+	50.0   # 50 token capacity
 )
 
 limiter = Async::Limiter::Limited.new(100, timing: timing)
@@ -203,24 +203,24 @@ limiter = Async::Limiter::Limited.new(100, timing: timing)
 
 # Light operations
 limiter.acquire(cost: 0.5) do
-  perform_light_operation()
+	perform_light_operation()
 end
 
 # Normal operations  
 limiter.acquire(cost: 1.0) do  # Default cost
-  perform_standard_operation()
+	perform_standard_operation()
 end
 
 # Heavy operations
 limiter.acquire(cost: 3.5) do
-  perform_heavy_operation()
+	perform_heavy_operation()
 end
 
 # Impossible operations fail fast
 begin
-  limiter.acquire(cost: 15.0)  # Exceeds capacity!
+	limiter.acquire(cost: 15.0)  # Exceeds capacity!
 rescue ArgumentError => e
-  puts "#{e.message}"  # Cost 15.0 exceeds maximum supported cost 10.0
+	puts "#{e.message}"  # Cost 15.0 exceeds maximum supported cost 10.0
 end
 ```
 
@@ -229,13 +229,13 @@ end
 ```ruby
 # Heavy operation with timeout
 result = limiter.acquire(timeout: 30.0, cost: 5.0) do |resource|
-  expensive_computation()
+	expensive_computation()
 end
 
 if result
-  puts "Completed successfully"
+	puts "Completed successfully"
 else
-  puts "Timed out waiting for capacity"
+	puts "Timed out waiting for capacity"
 end
 ```
 
@@ -258,12 +258,12 @@ token.release
 
 # Or with blocks (automatic cleanup)
 limiter.acquire_token do |token|
-  use_resource(token.resource)
-  
-  # Re-acquire within the same block
-  token.acquire(priority: 1) do |new_token|
-    use_resource_again(new_token.resource)
-  end
+	use_resource(token.resource)
+	
+	# Re-acquire within the same block
+	token.acquire(priority: 1) do |new_token|
+		use_resource_again(new_token.resource)
+	end
 end  # All tokens automatically released
 ```
 
@@ -276,28 +276,28 @@ limiter = Async::Limiter::Limited.new(1)
 
 # Acquire with automatic release
 limiter.acquire do |resource|
-  puts "I have the resource"
-  # Automatically released when block exits
+	puts "I have the resource"
+	# Automatically released when block exits
 end
 
 # Manual acquire/release
 resource = limiter.acquire
 begin
-  puts "I have the resource"
+	puts "I have the resource"
 ensure
-  limiter.release(resource)
+	limiter.release(resource)
 end
 
 # Non-blocking acquisition
 resource = limiter.acquire(timeout: 0)
 if resource
-  begin
-    puts "Got the resource immediately"
-  ensure
-    limiter.release(resource)
-  end
+	begin
+		puts "Got the resource immediately"
+	ensure
+		limiter.release(resource)
+	end
 else
-  puts "Resource not available"
+	puts "Resource not available"
 end
 ```
 
