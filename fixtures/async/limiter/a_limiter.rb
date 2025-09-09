@@ -3,7 +3,6 @@
 # Released under the MIT License.
 # Copyright, 2025, by Samuel Williams.
 
-require "async/barrier"
 require "async/limiter/timing/leaky_bucket"
 require "sus/fixtures/async/scheduler_context"
 
@@ -13,6 +12,7 @@ module Async
 			let(:limiter) {subject.new}
 			
 			it "can acquire" do
+				expect(limiter).to be(:can_acquire?)
 				expect(limiter.acquire).to be == true
 			end
 			

@@ -3,13 +3,16 @@
 # Released under the MIT License.
 # Copyright, 2025, by Samuel Williams.
 
-require "async/limiter/queued"
 require "async/queue"
 require "async/priority_queue"
-require "sus/fixtures/async/scheduler_context"
+
+require "async/limiter/queued"
+require "async/limiter/a_limiter"
+require "async/limiter/a_semaphore"
 
 describe Async::Limiter::Queued do
 	it_behaves_like Async::Limiter::ALimiter
+	it_behaves_like Async::Limiter::ASemaphore
 	
 	include Sus::Fixtures::Async::SchedulerContext
 	

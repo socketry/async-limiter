@@ -13,8 +13,6 @@ describe Async::Limiter::Generic do
 	
 	let(:semaphore) {Async::Limiter::Generic.new}
 	
-	
-	
 	it "allows unlimited acquisitions" do
 		100.times do
 			semaphore.acquire

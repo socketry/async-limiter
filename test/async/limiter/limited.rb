@@ -6,10 +6,12 @@
 require "async/limiter/limited"
 require "async/limiter/timing/fixed_window"
 require "async/limiter/timing/leaky_bucket"
-require "sus/fixtures/async/scheduler_context"
+require "async/limiter/a_limiter"
+require "async/limiter/a_semaphore"
 
 describe Async::Limiter::Limited do
 	it_behaves_like Async::Limiter::ALimiter
+	it_behaves_like Async::Limiter::ASemaphore
 	
 	include Sus::Fixtures::Async::SchedulerContext
 	
