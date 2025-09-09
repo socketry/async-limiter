@@ -22,7 +22,7 @@ module Async
 			# @parameter timing [#can_acquire?, #acquire, #wait, #maximum_cost] Strategy for timing constraints.
 			# @parameter parent [Async::Task, nil] Parent task for creating child tasks.
 			# @raises [ArgumentError] If limit is not positive.
-			def initialize(limit, timing: Timing::None, parent: nil)
+			def initialize(limit = 1, timing: Timing::None, parent: nil)
 				raise ArgumentError, "Limit must be positive!" unless limit.positive?
 				
 				super(timing: timing, parent: parent)

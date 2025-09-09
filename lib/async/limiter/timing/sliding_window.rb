@@ -66,8 +66,6 @@ module Async
 					@frame_start_time = Clock.now
 				end
 				
-				
-				
 				# Wait for timing constraints to be satisfied.
 				# Sleeps until the next window or frame becomes available, or returns immediately if ready.
 				# @parameter mutex [Mutex] Mutex to release during sleep.
@@ -76,37 +74,37 @@ module Async
 				# @returns [Boolean] True if constraints are satisfied, false if timeout exceeded.
 				def wait(mutex, deadline = nil, cost = 1)
 					# Only wait if we can't acquire right now:
-					return true if can_acquire?(Clock.now, cost)
-					
-					# Handle non-blocking case
-					if deadline&.expired? || (deadline && deadline.remaining == 0)
-						return false
+					until can_acquire?(Clock.now, cost)
+						# Handle non-blocking case
+						if deadline&.expired? || (deadline && deadline.remaining == 0)
+							return false
+						end
+						
+						next_time = @burst_strategy.next_acquire_time(
+							@start_time,
+							@duration,
+							@frame_start_time,
+							@duration / @limit.to_f
+						)
+						
+						current_time = Clock.now
+						wait_time = next_time - current_time
+						
+						return true if wait_time <= 0
+						
+						# Check if wait would exceed deadline
+						remaining = deadline&.remaining
+						if remaining && wait_time > remaining
+							return false  # Would exceed deadline
+						end
+						
+						# Wait for the required time (or remaining time if deadline specified)
+						actual_wait = remaining ? [wait_time, remaining].min : wait_time
+						
+						mutex.sleep(actual_wait)  # Release mutex during sleep
 					end
-					
-					next_time = @burst_strategy.next_acquire_time(
-						@start_time,
-						@duration,
-						@frame_start_time,
-						@duration / @limit.to_f
-					)
-					
-					current_time = Clock.now
-					wait_time = next_time - current_time
-					
-					return true if wait_time <= 0
-					
-					# Check if wait would exceed deadline
-					remaining = deadline&.remaining
-					if remaining && wait_time > remaining
-						return false  # Would exceed deadline
-					end
-					
-					# Wait for the required time (or remaining time if deadline specified)
-					actual_wait = remaining ? [wait_time, remaining].min : wait_time
-					
-					mutex.sleep(actual_wait)  # Release mutex during sleep
-					
-					return can_acquire?(Clock.now, cost)
+
+					return true
 				end
 				
 				# Calculate the start time of the current window for the given time.

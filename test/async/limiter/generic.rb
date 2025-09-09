@@ -4,15 +4,12 @@
 # Copyright, 2025, by Samuel Williams.
 
 require "async/limiter/generic"
-require "async/limiter/limited"
-require "async/limiter/queued"
-require "async/limiter/timing/fixed_window"
-require "async/limiter/timing/leaky_bucket"
-require "async/queue"
-require "sus/fixtures/async/scheduler_context"
+require "async/limiter/a_limiter"
 
 describe Async::Limiter::Generic do
 	include Sus::Fixtures::Async::SchedulerContext
+
+	it_behaves_like Async::Limiter::ALimiter
 	
 	let(:semaphore) {Async::Limiter::Generic.new}
 	

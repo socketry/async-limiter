@@ -61,31 +61,33 @@ module Async
 				# @parameter cost [Numeric] Cost of the operation (default: 1).
 				# @returns [Boolean] True if capacity is available, false if timeout exceeded.
 				def wait(mutex, deadline = nil, cost = 1)
-					return true if can_acquire?(Clock.now, cost)
-					
-					# Handle non-blocking case
-					if deadline&.expired?
-						return false
+					# Loop until we can acquire or deadline expires:
+					until can_acquire?(Clock.now, cost)
+						# Check deadline before each wait:
+						return false if deadline&.expired?
+						
+						# Calculate how long to wait for bucket to leak enough for this cost:
+						needed_capacity = (@level + cost) - @capacity
+						wait_time = needed_capacity / @rate.to_f
+						
+						# Should be able to acquire now:
+						return true if wait_time <= 0
+						
+						# Check if wait would exceed deadline:
+						remaining = deadline&.remaining
+						if remaining && wait_time > remaining
+							# Would exceed deadline:
+							return false
+						end
+						
+						# Wait for the required time (or remaining time if deadline specified):
+						actual_wait = remaining ? [wait_time, remaining].min : wait_time
+						
+						# Release mutex during sleep:
+						mutex.sleep(actual_wait)
 					end
 					
-					# Calculate how long to wait for bucket to leak enough for this cost
-					needed_capacity = (@level + cost) - @capacity
-					wait_time = needed_capacity / @rate.to_f
-					
-					return true if wait_time <= 0
-					
-					# Check if wait would exceed deadline
-					remaining = deadline&.remaining
-					if remaining && wait_time > remaining
-						return false  # Would exceed deadline
-					end
-					
-					# Wait for the required time (or remaining time if deadline specified)
-					actual_wait = remaining ? [wait_time, remaining].min : wait_time
-					
-					mutex.sleep(actual_wait)  # Release mutex during sleep
-					
-					return can_acquire?(Clock.now, cost)
+					return true
 				end
 				
 				# Get current bucket level (for debugging/monitoring).

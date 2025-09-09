@@ -138,6 +138,12 @@ describe Async::Limiter::Timing::LeakyBucket do
 	end
 	
 	with "#wait with deadlines" do
+		it "waits until it can acquire" do
+			bucket = subject.new(1.0, 2.0, initial_level: 0.0)
+			result = bucket.wait(Kernel, nil, 1.0)
+			expect(result).to be == true
+		end
+		
 		it "returns false immediately for expired deadlines" do
 			# Create a full bucket so it would normally need to wait
 			bucket = subject.new(1.0, 2.0, initial_level: 2.0)

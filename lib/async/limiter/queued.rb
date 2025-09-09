@@ -21,7 +21,7 @@ module Async
 			# @parameter queue [#push, #pop, #empty?] Thread-safe queue containing pre-existing resources.
 			# @parameter timing [#can_acquire?, #acquire, #wait, #maximum_cost] Strategy for timing constraints.
 			# @parameter parent [Async::Task, nil] Parent task for creating child tasks.
-			def initialize(queue, timing: Timing::None, parent: nil)
+			def initialize(queue = Queue.new, timing: Timing::None, parent: nil)
 				super(timing: timing, parent: parent)
 				@queue = queue
 			end
