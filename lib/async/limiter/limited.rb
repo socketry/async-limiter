@@ -28,8 +28,8 @@ module Async
 				super(timing: timing, parent: parent)
 				@limit = limit
 				@count = 0
-				@mutex = Mutex.new
-				@condition = ConditionVariable.new
+				
+				@available = ConditionVariable.new
 			end
 			
 			# @attribute [Integer] The maximum number of concurrent tasks.
@@ -48,7 +48,7 @@ module Async
 			def release(resource = nil)
 				@mutex.synchronize do
 					@count -= 1
-					@condition.signal
+					@available.signal
 				end
 			end
 			
@@ -62,7 +62,7 @@ module Async
 					old_limit = @limit
 					@limit = new_limit
 					# Wake up waiting tasks if limit increased:
-					@condition.broadcast if new_limit > old_limit
+					@available.broadcast if new_limit > old_limit
 				end
 			end
 			
@@ -70,23 +70,21 @@ module Async
 			
 			# Acquire concurrency resource with optional deadline.
 			def acquire_concurrency(deadline = nil, **options)
-				@mutex.synchronize do
-					# Fast path: immediate return for expired deadlines, but only if at capacity
-					return nil if deadline&.expired? && @count >= @limit
+				# Fast path: immediate return for expired deadlines, but only if at capacity
+				return nil if deadline&.expired? && @count >= @limit
+				
+				# Wait for capacity with deadline tracking
+				while @count >= @limit
+					remaining = deadline&.remaining
+					return nil if remaining && remaining <= 0
 					
-					# Wait for capacity with deadline tracking
-					while @count >= @limit
-						remaining = deadline&.remaining
-						return nil if remaining && remaining <= 0
-						
-						unless @condition.wait(@mutex, remaining)
-							return nil  # Timeout exceeded
-						end
+					unless @available.wait(@mutex, remaining)
+						return nil  # Timeout exceeded
 					end
-					
-					@count += 1
-					true
 				end
+				
+				@count += 1
+				true
 			end
 		end
 	end

@@ -11,7 +11,7 @@ require "sus/fixtures/async/scheduler_context"
 describe Async::Limiter::Limited do
 	include Sus::Fixtures::Async::SchedulerContext
 	
-	let(:semaphore) {Async::Limiter::Limited.new(2)}
+	let(:semaphore) {subject.new(2)}
 	
 	it "enforces the limit" do
 		expect(semaphore.limit).to be == 2
@@ -183,6 +183,26 @@ describe Async::Limiter::Limited do
 		expect(tiny_limiter.acquire(cost: 0.5)).to be == true
 	end
 	
+	with "non-blocking acquire" do
+		let(:semaphore) {subject.new(1)}
+		
+		it "does not block" do
+			semaphore.acquire
+			results = []
+			
+			# Start multiple tasks with different timeouts:
+			tasks = [
+					Async{semaphore.acquire(timeout: 0.002); results << "Long timeout."},
+					Async{semaphore.acquire(timeout: 0);     results << "Non-blocking."},
+					Async{semaphore.acquire(timeout: 0.001); results << "Short timeout."},
+					Async{semaphore.acquire(timeout: 0);     results << "Non-blocking."},
+				]
+			
+			tasks.map(&:wait)
+			expect(results).to be == ["Non-blocking.", "Non-blocking.", "Short timeout.", "Long timeout."]
+		end
+	end
+	
 	with "timing coordination" do
 		let(:timing) {Async::Limiter::Timing::FixedWindow.new(1.0, Async::Limiter::Timing::BurstStrategy::Greedy, 2)}
 		
@@ -225,57 +245,6 @@ describe Async::Limiter::Limited do
 			
 			# Timing limit should be enforced
 			expect(successful_acquisitions).to be <= 2
-		end
-		
-		it "prevents convoy effect - quick timeouts not blocked by slow timeouts" do
-			# Create a limiter that will block (timing constraint)
-			timing = Async::Limiter::Timing::LeakyBucket.new(0.1, 1, initial_level: 1.0)
-			convoy_limiter = Async::Limiter::Limited.new(1, timing: timing)
-			
-			# Fill the limiter to capacity
-			convoy_limiter.acquire  # This will succeed but fill timing capacity
-			
-			quick_task_times = []
-			slow_task_started = false
-			
-			# Start a task with long timeout that will block
-			slow_task = reactor.async do
-				slow_task_started = true
-				start_time = Time.now
-				result = convoy_limiter.acquire(timeout: 1.0)  # Long timeout
-				end_time = Time.now
-				[:slow, result, end_time - start_time]
-			end
-			
-			# Wait for slow task to start and enter wait state
-			sleep(0.01) until slow_task_started
-			sleep(0.01) # Give it time to enter wait
-			
-			# Start quick tasks that should not be blocked by the slow task
-			quick_tasks = 3.times.map do |i|
-				reactor.async do
-					start_time = Time.now
-					result = convoy_limiter.acquire(timeout: 0)  # Non-blocking
-					end_time = Time.now
-					quick_task_times << end_time - start_time
-					[:quick, i, result, end_time - start_time]
-				end
-			end
-			
-			# Wait for quick tasks to complete (they should be fast)
-			quick_results = quick_tasks.map(&:wait)
-			
-			# Clean up slow task
-			slow_task.stop
-			
-			# Verify quick tasks completed quickly (not blocked by slow task)
-			max_quick_time = quick_task_times.max
-			expect(max_quick_time).to be < 0.1  # Should complete in less than 100ms
-			
-			# Verify quick tasks got expected results (nil since at capacity)
-			quick_results.each do |result|
-				expect(result[2]).to be == nil  # timeout: 0 should return nil when blocked
-			end
 		end
 	end
 end
