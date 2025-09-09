@@ -43,10 +43,10 @@ module Async
 				end
 				
 				# Check if a task can be acquired based on window constraints.
-				# @parameter current_time [Numeric] Current time for window calculations.
 				# @parameter cost [Numeric] The cost/weight of the operation.
+				# @parameter current_time [Numeric] Current time for window calculations.
 				# @returns [Boolean] True if window and frame constraints allow acquisition.
-				def can_acquire?(current_time = Clock.now, cost = 1)
+				def can_acquire?(cost = 1, current_time = Clock.now)
 					# Update window if needed
 					if window_changed?(current_time, @start_time)
 						@start_time = window_start_time(current_time)
@@ -74,7 +74,7 @@ module Async
 				# @returns [Boolean] True if constraints are satisfied, false if timeout exceeded.
 				def wait(mutex, deadline = nil, cost = 1)
 					# Only wait if we can't acquire right now:
-					until can_acquire?(Clock.now, cost)
+					until can_acquire?(cost, Clock.now)
 						# Handle non-blocking case
 						if deadline&.expired? || (deadline && deadline.remaining == 0)
 							return false

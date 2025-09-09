@@ -40,10 +40,10 @@ module Async
 				end
 				
 				# Check if a task can be acquired with the given cost.
-				# @parameter current_time [Numeric] Current time for leak calculations.
 				# @parameter cost [Numeric] The cost/weight of the operation.
+				# @parameter current_time [Numeric] Current time for leak calculations.
 				# @returns [Boolean] True if bucket has capacity for this cost.
-				def can_acquire?(current_time = Clock.now, cost = 1)
+				def can_acquire?(cost = 1, current_time = Clock.now)
 					leak_bucket(current_time)
 					@level + cost <= @capacity
 				end
@@ -62,7 +62,7 @@ module Async
 				# @returns [Boolean] True if capacity is available, false if timeout exceeded.
 				def wait(mutex, deadline = nil, cost = 1)
 					# Loop until we can acquire or deadline expires:
-					until can_acquire?(Clock.now, cost)
+					until can_acquire?(cost, Clock.now)
 						# Check deadline before each wait:
 						return false if deadline&.expired?
 						

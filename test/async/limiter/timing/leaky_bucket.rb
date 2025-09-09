@@ -114,10 +114,10 @@ describe Async::Limiter::Timing::LeakyBucket do
 			bucket = subject.new(0.0, 5.0)  # 0 leak rate, capacity 5
 			
 			# Should support different costs
-			expect(bucket.can_acquire?(Async::Clock.now, 1)).to be == true
-			expect(bucket.can_acquire?(Async::Clock.now, 2.5)).to be == true
-			expect(bucket.can_acquire?(Async::Clock.now, 5.0)).to be == true
-			expect(bucket.can_acquire?(Async::Clock.now, 5.1)).to be == false  # Exceeds capacity
+			expect(bucket.can_acquire?(1)).to be == true
+			expect(bucket.can_acquire?(2.5)).to be == true
+			expect(bucket.can_acquire?(5.0)).to be == true
+			expect(bucket.can_acquire?(5.1)).to be == false  # Exceeds capacity
 			
 			# Acquire with different costs
 			bucket.acquire(2.0)
@@ -127,8 +127,8 @@ describe Async::Limiter::Timing::LeakyBucket do
 			expect(bucket.level).to be_within(0.01).of(3.5)
 			
 			# Should not be able to acquire cost that would exceed capacity
-			expect(bucket.can_acquire?(Async::Clock.now, 2.0)).to be == false  # 3.5 + 2.0 > 5.0
-			expect(bucket.can_acquire?(Async::Clock.now, 1.5)).to be == true   # 3.5 + 1.5 = 5.0
+			expect(bucket.can_acquire?(2.0)).to be == false  # 3.5 + 2.0 > 5.0
+			expect(bucket.can_acquire?(1.5)).to be == true   # 3.5 + 1.5 = 5.0
 		end
 		
 		it "validates maximum cost" do
