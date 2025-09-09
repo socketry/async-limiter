@@ -10,7 +10,7 @@ require "sus/fixtures/async/scheduler_context"
 
 describe Async::Limiter::Queued do
 	it_behaves_like Async::Limiter::ALimiter
-
+	
 	include Sus::Fixtures::Async::SchedulerContext
 	
 	let(:queue) {Async::Queue.new}

@@ -20,7 +20,7 @@ module Async
 				result = limiter.acquire do
 					true
 				end
-
+				
 				expect(result).to be == true
 			end
 			
@@ -28,7 +28,7 @@ module Async
 				result = limiter.acquire(timeout: 0.01) do
 					true
 				end
-
+				
 				expect(result).to be == true
 			end
 			
@@ -36,21 +36,21 @@ module Async
 				result = limiter.acquire(cost: 1) do
 					true
 				end
-
+				
 				expect(result).to be == true
 			end
-
+			
 			with "concurrency" do
 				include Sus::Fixtures::Async::SchedulerContext
 				
 				with Async::Limiter::Timing::SlidingWindow do
 					let(:timing) {Async::Limiter::Timing::SlidingWindow.new(0.1, Async::Limiter::Timing::BurstStrategy::Greedy, 10)}
 					let(:limiter) {subject.new(timing: timing)}
-
+					
 					it "can acquire several times" do
 						# Consume all available capacity:
 						limiter.acquire(cost: 10)
-
+						
 						tasks = 3.times.map do
 							Async do
 								limiter.acquire(cost: 10) do
@@ -58,25 +58,25 @@ module Async
 								end
 							end
 						end
-
+						
 						limiter.release
-
+						
 						# Verify that all tasks acquired:
 						tasks.each do |task|
 							expect(task.wait).to be == true
 						end
 					end
 				end
-
+				
 				with Async::Limiter::Timing::LeakyBucket do
 					# 2 tokens/sec, capacity 10
 					let(:timing) {Async::Limiter::Timing::LeakyBucket.new(10.0, 10.0)}
 					let(:limiter) {subject.new(timing: timing)}
-
+					
 					it "can acquire several times" do
 						# Consume all available capacity:
 						limiter.acquire(cost: 10)
-
+						
 						tasks = 3.times.map do
 							Async do
 								limiter.acquire do
@@ -84,9 +84,9 @@ module Async
 								end
 							end
 						end
-
+						
 						limiter.release
-
+						
 						# Verify that all tasks acquired:
 						tasks.each do |task|
 							expect(task.wait).to be == true

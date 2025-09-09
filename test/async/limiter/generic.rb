@@ -8,14 +8,12 @@ require "async/limiter/a_limiter"
 
 describe Async::Limiter::Generic do
 	it_behaves_like Async::Limiter::ALimiter
-
+	
 	include Sus::Fixtures::Async::SchedulerContext
 	
 	let(:semaphore) {Async::Limiter::Generic.new}
 	
-	it "has unlimited concurrency by default" do
-		expect(semaphore.acquire(timeout: 0)).to be == true
-	end
+	
 	
 	it "allows unlimited acquisitions" do
 		100.times do

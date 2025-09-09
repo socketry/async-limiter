@@ -103,7 +103,7 @@ module Async
 						
 						mutex.sleep(actual_wait)  # Release mutex during sleep
 					end
-
+					
 					return true
 				end
 				
