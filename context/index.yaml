@@ -34,3 +34,8 @@ files:
   description: This guide explains how to use timing strategies to provide rate limiting
     and timing constraints that can be combined with any limiter. They control *when*
     operations can execute, while limiters control *how many* can execute concurrently.
+- path: token-usage.md
+  title: Token Usage
+  description: This guide explains how to use tokens for advanced resource management
+    with `async-limiter`. Tokens provide sophisticated resource handling with support
+    for re-acquisition and automatic cleanup.

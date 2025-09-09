@@ -129,3 +129,98 @@ Async do
 	end
 end
 ```
+
+### Variable Cost Operations
+
+Rate limiting by default works with unit costs - each acquire consumes 1 unit of capacity. However, in more complex situations, you may want to use variable costs to model different operation weights:
+
+```ruby
+require "async"
+require "async/limiter"
+
+Async do
+	# Leaky bucket: 2 tokens/second, capacity 10
+	timing = Async::Limiter::Timing::LeakyBucket.new(2.0, 10.0)
+	limiter = Async::Limiter::Limited.new(100, timing: timing)
+	
+	# Light operations consume fewer tokens:
+	limiter.acquire(cost: 0.5) do
+		puts "Light database query"
+	end
+	
+	# Heavy operations consume more tokens:
+	limiter.acquire(cost: 5.0) do
+		puts "Complex ML inference"
+	end
+end
+```
+
+**Cost represents the resource weight** of each operation:
+- `cost: 0.5` - Light operations (quick queries, cache reads).
+- `cost: 1.0` - Standard operations (default).
+- `cost: 5.0` - Heavy operations (complex computations, large uploads).
+
+#### Starvation and Head-of-Line Blocking
+
+**Variable costs introduce two important fairness issues:**
+
+**1. Starvation Problem:**
+High-cost operations can be indefinitely delayed by streams of low-cost operations:
+
+```ruby
+# Without ordering - starvation can occur
+timing = Async::Limiter::Timing::LeakyBucket.new(2.0, 10.0)
+limiter = Async::Limiter::Limited.new(100, timing: timing)
+
+# High-cost task starts waiting for 8.0 tokens
+limiter.acquire(cost: 8.0) do
+	puts "Expensive operation"  # May never execute!
+end
+
+# Continuous stream of small operations consume tokens as they become available
+100.times do |i|
+	limiter.acquire(cost: 0.5) do
+		puts "Quick operation #{i}"  # These keep running
+	end
+end
+```
+
+**2. Head-of-Line Blocking:**
+When using FIFO ordering to prevent starvation, large operations can block smaller ones:
+
+```ruby
+# With ordering - prevents starvation but creates head-of-line blocking
+ordered_timing = Async::Limiter::Timing::Ordered.new(timing)
+fair_limiter = Async::Limiter::Limited.new(100, timing: ordered_timing)
+
+# Large operation blocks the queue
+fair_limiter.acquire(cost: 8.0) do
+	puts "Expensive operation (takes time to get tokens)"
+end
+
+# These must wait even though they need fewer tokens
+fair_limiter.acquire(cost: 0.5) { puts "Quick op 1" }  # Blocked
+fair_limiter.acquire(cost: 0.5) { puts "Quick op 2" }  # Blocked
+```
+
+#### Choosing the Right Strategy
+
+**Use Unordered (default) when:**
+- Maximum throughput is critical
+- Operations have similar costs
+- Occasional starvation is acceptable
+
+**Use Ordered when:**
+- Fairness is more important than efficiency
+- Starvation would be unacceptable
+- Predictable execution order is required
+
+```ruby
+# Unordered: Higher throughput, possible starvation
+timing = Async::Limiter::Timing::LeakyBucket.new(2.0, 10.0)
+
+# Ordered: Fair execution, lower throughput
+ordered_timing = Async::Limiter::Timing::Ordered.new(timing)
+```
+
+The choice depends on whether your application prioritizes **efficiency** (unordered) or **fairness** (ordered).

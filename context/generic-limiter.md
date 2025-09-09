@@ -13,7 +13,7 @@ require "async/limiter"
 Async do
 	limiter = Async::Limiter::Generic.new
 	
-	# All 100 tasks run concurrently
+	# All 100 tasks run concurrently:
 	100.times do |i|
 		limiter.async do |task|
 			puts "Task #{i} running"
@@ -98,9 +98,12 @@ end
 Async do
 	# Allow bursts up to 20 operations, then limit to 5 per second:
 	timing = Async::Limiter::Timing::SlidingWindow.new(
-		1.0,                                             # 1-second window.
-		Async::Limiter::Timing::BurstStrategy::Greedy,   # Allow bursting.
-		5                                                # 5 operations per second.
+		# 1-second window:
+		1.0,
+		# Allow bursting:
+		Async::Limiter::Timing::BurstStrategy::Greedy,
+		# 5 operations per second:
+		5
 	)
 	
 	limiter = Async::Limiter::Generic.new(timing: timing)

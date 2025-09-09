@@ -18,6 +18,8 @@ Please see the [project documentation](https://socketry.github.io/async-limiter/
 
   - [Timing Strategies](https://socketry.github.io/async-limiter/guides/timing-strategies/index) - This guide explains how to use timing strategies to provide rate limiting and timing constraints that can be combined with any limiter. They control *when* operations can execute, while limiters control *how many* can execute concurrently.
 
+  - [Token Usage](https://socketry.github.io/async-limiter/guides/token-usage/index) - This guide explains how to use tokens for advanced resource management with `async-limiter`. Tokens provide sophisticated resource handling with support for re-acquisition and automatic cleanup.
+
 ## See Also
 
   - [falcon](https://github.com/socketry/falcon) - A high-performance web server
