@@ -37,8 +37,7 @@ describe Async::Limiter::Timing::SlidingWindow do
 	
 	it "has wait method" do
 		expect(window_strategy).to respond_to(:wait)
-		mutex = Mutex.new
-		window_strategy.wait(mutex)  # Should not hang
+		window_strategy.wait(Kernel)  # Should not hang
 	end
 	
 	it "waits when timing constraints require it" do

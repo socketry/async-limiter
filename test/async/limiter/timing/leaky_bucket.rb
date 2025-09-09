@@ -152,8 +152,7 @@ describe Async::Limiter::Timing::LeakyBucket do
 			expired_deadline = Async::Deadline.new(0.001)
 			sleep(0.002)  # Ensure deadline is expired
 			
-			mutex = Mutex.new
-			result = bucket.wait(mutex, expired_deadline, 1.0)
+			result = bucket.wait(Kernel, expired_deadline, 1.0)
 			expect(result).to be == false
 		end
 		
@@ -166,8 +165,7 @@ describe Async::Limiter::Timing::LeakyBucket do
 			
 			# Trying to acquire cost 1.0 would require ~1 second to leak enough space
 			# But deadline is only 100ms, so should return false
-			mutex = Mutex.new
-			result = bucket.wait(mutex, short_deadline, 1.0)
+			result = bucket.wait(Kernel, short_deadline, 1.0)
 			expect(result).to be == false
 		end
 	end

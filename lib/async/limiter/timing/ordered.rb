@@ -18,7 +18,7 @@ module Async
 				# @parameter delegate [#acquire, #wait, #maximum_cost] The timing strategy to wrap.
 				def initialize(delegate)
 					@delegate = delegate
-					@mutex = ::Thread::Mutex.new
+					@mutex = Mutex.new
 				end
 				
 				# Get maximum cost from delegate strategy.
