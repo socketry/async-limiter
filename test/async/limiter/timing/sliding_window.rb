@@ -12,7 +12,7 @@ describe Async::Limiter::Timing::SlidingWindow do
 	let(:window_strategy) do
 		subject.new(
 			1.0,  # 1 second window
-			Async::Limiter::Timing::BurstStrategy::Greedy,
+			Async::Limiter::Timing::Burst::Greedy,
 			2     # 2 tasks per window
 		)
 	end
@@ -44,7 +44,7 @@ describe Async::Limiter::Timing::SlidingWindow do
 		# Create a very restrictive window for testing waits
 		restrictive_window = subject.new(
 			0.1,  # 100ms window  
-			Async::Limiter::Timing::BurstStrategy::Smooth,  # Force even distribution
+			Async::Limiter::Timing::Burst::Smooth,  # Force even distribution
 			1     # Only 1 task per window
 		)
 		
@@ -74,7 +74,7 @@ describe Async::Limiter::Timing::SlidingWindow do
 		# Use the same restrictive window
 		restrictive_window = subject.new(
 			0.2,  # 200ms window
-			Async::Limiter::Timing::BurstStrategy::Smooth,
+			Async::Limiter::Timing::Burst::Smooth,
 			1     # Only 1 task per window
 		)
 		

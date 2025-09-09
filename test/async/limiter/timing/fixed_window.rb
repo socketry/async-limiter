@@ -12,7 +12,7 @@ describe Async::Limiter::Timing::FixedWindow do
 	let(:fixed_window) do
 		subject.new(
 			1.0,  # 1 second window
-			Async::Limiter::Timing::BurstStrategy::Greedy,
+			Async::Limiter::Timing::Burst::Greedy,
 			3     # 3 tasks per window
 		)
 	end

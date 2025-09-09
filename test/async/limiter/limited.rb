@@ -171,7 +171,7 @@ describe Async::Limiter::Limited do
 	with "greedy fixed window" do
 		include Sus::Fixtures::Async::SchedulerContext
 		
-		let(:timing) {Async::Limiter::Timing::FixedWindow.new(1.0, Async::Limiter::Timing::BurstStrategy::Greedy, 2)}
+		let(:timing) {Async::Limiter::Timing::FixedWindow.new(1.0, Async::Limiter::Timing::Burst::Greedy, 2)}
 		
 		# High concurrency limit, low timing limit:
 		let(:limiter) {Async::Limiter::Limited.new(10, timing: timing)}

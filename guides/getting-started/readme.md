@@ -115,7 +115,7 @@ Async do
 	# Max 3 tasks within any 1-second sliding window
 	timing = Async::Limiter::Timing::SlidingWindow.new(
 		1.0, # 1-second window.
-		Async::Limiter::Timing::BurstStrategy::Greedy, # Allow bursting
+		Async::Limiter::Timing::Burst::Greedy, # Allow bursting
 		3 # 3 tasks per window
 	)
 	

@@ -3,11 +3,11 @@
 # Released under the MIT License.
 # Copyright, 2025, by Samuel Williams.
 
-require "async/limiter/timing/burst_strategy"
+require "async/limiter/timing/burst"
 
-describe Async::Limiter::Timing::BurstStrategy do
+describe Async::Limiter::Timing::Burst do
 	with "Greedy" do
-		let(:strategy) {Async::Limiter::Timing::BurstStrategy::Greedy}
+		let(:strategy) {Async::Limiter::Timing::Burst::Greedy}
 		
 		it "allows acquisition when under limit" do
 			expect(strategy.can_acquire?(2, 5, false)).to be == true
@@ -35,7 +35,7 @@ describe Async::Limiter::Timing::BurstStrategy do
 	end
 	
 	with "Smooth" do
-		let(:strategy) {Async::Limiter::Timing::BurstStrategy::Smooth}
+		let(:strategy) {Async::Limiter::Timing::Burst::Smooth}
 		
 		it "only allows acquisition when frame changed" do
 			expect(strategy.can_acquire?(0, 5, true)).to be == true   # Frame changed

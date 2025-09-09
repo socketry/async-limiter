@@ -43,7 +43,7 @@ Provides smooth rate limiting with continuous rolling time windows:
 # Allow 3 operations within any 1-second sliding window
 timing = Async::Limiter::Timing::SlidingWindow.new(
 	1.0,                                             # 1-second window
-	Async::Limiter::Timing::BurstStrategy::Greedy,   # Burst behavior
+	Async::Limiter::Timing::Burst::Greedy,   # Burst behavior
 	3                                                # 3 operations per window
 )
 
@@ -67,14 +67,14 @@ Different burst behaviors affect how operations are scheduled:
 # Greedy: Allow immediate bursts up to the limit
 greedy_timing = Async::Limiter::Timing::SlidingWindow.new(
 	2.0,                                           # 2-second window
-	Async::Limiter::Timing::BurstStrategy::Greedy, # Allow bursts
+	Async::Limiter::Timing::Burst::Greedy, # Allow bursts
 	6                                              # 6 operations per 2 seconds
 )
 
 # Conservative: Spread operations evenly over time
 conservative_timing = Async::Limiter::Timing::SlidingWindow.new(
 	2.0,                                               # 2-second window
-	Async::Limiter::Timing::BurstStrategy::Conservative, # Even distribution
+	Async::Limiter::Timing::Burst::Conservative, # Even distribution
 	6                                                  # 6 operations per 2 seconds
 )
 
@@ -107,7 +107,7 @@ Operations can consume different amounts of the rate limit:
 ```ruby
 timing = Async::Limiter::Timing::SlidingWindow.new(
 	1.0,                                             # 1-second window
-	Async::Limiter::Timing::BurstStrategy::Greedy,
+	Async::Limiter::Timing::Burst::Greedy,
 	10.0                                             # 10 units per second
 )
 
@@ -143,7 +143,7 @@ Provides rate limiting with discrete time boundaries:
 # Allow 5 operations per 2-second window with fixed boundaries
 timing = Async::Limiter::Timing::FixedWindow.new(
 	2.0,                                             # 2-second windows
-	Async::Limiter::Timing::BurstStrategy::Greedy,   # Allow bursting within window
+	Async::Limiter::Timing::Burst::Greedy,   # Allow bursting within window
 	5                                                # 5 operations per window
 )
 
@@ -166,7 +166,7 @@ end
 # Demonstrate window boundaries
 timing = Async::Limiter::Timing::FixedWindow.new(
 	1.0,                                             # 1-second windows
-	Async::Limiter::Timing::BurstStrategy::Greedy,
+	Async::Limiter::Timing::Burst::Greedy,
 	3                                                # 3 operations per window
 )
 
@@ -193,12 +193,12 @@ end
 ```ruby
 # Greedy allows all operations immediately within each window
 greedy_timing = Async::Limiter::Timing::FixedWindow.new(
-	2.0, Async::Limiter::Timing::BurstStrategy::Greedy, 4
+	2.0, Async::Limiter::Timing::Burst::Greedy, 4
 )
 
 # Conservative spreads operations evenly within each window
 conservative_timing = Async::Limiter::Timing::FixedWindow.new(
-	2.0, Async::Limiter::Timing::BurstStrategy::Conservative, 4
+	2.0, Async::Limiter::Timing::Burst::Conservative, 4
 )
 
 puts "=== Greedy Fixed Window ==="
@@ -342,7 +342,7 @@ Pure rate limiting without concurrency constraints:
 ```ruby
 # Unlimited concurrency, but rate limited
 timing = Async::Limiter::Timing::SlidingWindow.new(1.0, 
-	Async::Limiter::Timing::BurstStrategy::Greedy, 5)
+	Async::Limiter::Timing::Burst::Greedy, 5)
 
 limiter = Async::Limiter::Generic.new(timing: timing)
 
@@ -389,7 +389,7 @@ queue = Async::Queue.new
 
 # Add timing constraint
 timing = Async::Limiter::Timing::FixedWindow.new(2.0,
-	Async::Limiter::Timing::BurstStrategy::Greedy, 4)
+	Async::Limiter::Timing::Burst::Greedy, 4)
 
 limiter = Async::Limiter::Queued.new(queue, timing: timing)
 
@@ -484,7 +484,7 @@ class JobProcessor
 		# Process jobs in batches every 30 seconds, up to 50 jobs per batch
 		timing = Async::Limiter::Timing::FixedWindow.new(
 			30.0,  # 30-second windows
-			Async::Limiter::Timing::BurstStrategy::Greedy,
+			Async::Limiter::Timing::Burst::Greedy,
 			50     # 50 jobs per window
 		)
 		

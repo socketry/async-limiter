@@ -4,7 +4,7 @@
 # Copyright, 2025, by Samuel Williams.
 
 require "async/clock"
-require_relative "burst_strategy"
+require_relative "burst"
 
 module Async
 	module Limiter
@@ -22,13 +22,13 @@ module Async
 				
 				# Initialize a window timing strategy.
 				# @parameter duration [Numeric] Duration of the window in seconds.
-				# @parameter burst_strategy [#can_acquire?] Controls bursting vs smooth behavior.
+				# @parameter burst [#can_acquire?] Controls bursting vs smooth behavior.
 				# @parameter limit [Integer] Maximum tasks per window.
-				def initialize(duration, burst_strategy, limit)
+				def initialize(duration, burst, limit)
 					raise ArgumentError, "duration must be positive" unless duration.positive?
 					
 					@duration = duration
-					@burst_strategy = burst_strategy
+					@burst = burst
 					@limit = limit
 					
 					@start_time = nil
@@ -56,7 +56,7 @@ module Async
 					frame_changed = frame_changed?(current_time)
 					
 					# Check both window and frame constraints with cost
-					@burst_strategy.can_acquire?(@count + cost - 1, @limit, frame_changed)
+					@burst.can_acquire?(@count + cost - 1, @limit, frame_changed)
 				end
 				
 				# Record that a task was acquired.
@@ -80,7 +80,7 @@ module Async
 							return false
 						end
 						
-						next_time = @burst_strategy.next_acquire_time(
+						next_time = @burst.next_acquire_time(
 							@start_time,
 							@duration,
 							@frame_start_time,

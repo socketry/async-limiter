@@ -133,7 +133,7 @@ module Async
 				include Sus::Fixtures::Async::SchedulerContext
 				
 				with Async::Limiter::Timing::SlidingWindow do
-					let(:timing) {Async::Limiter::Timing::SlidingWindow.new(0.1, Async::Limiter::Timing::BurstStrategy::Greedy, 10)}
+					let(:timing) {Async::Limiter::Timing::SlidingWindow.new(0.1, Async::Limiter::Timing::Burst::Greedy, 10)}
 					let(:limiter) {subject.new(timing: timing)}
 					
 					it "can acquire several times" do

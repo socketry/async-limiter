@@ -101,7 +101,7 @@ Async do
 		# 1-second window:
 		1.0,
 		# Allow bursting:
-		Async::Limiter::Timing::BurstStrategy::Greedy,
+		Async::Limiter::Timing::Burst::Greedy,
 		# 5 operations per second:
 		5
 	)

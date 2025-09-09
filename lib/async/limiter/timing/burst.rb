@@ -25,7 +25,7 @@ module Async
 			#   0s         60s        120s       180s
 			#   Tasks spread evenly: 0s, 12s, 24s, 36s, 48s
 			#
-			module BurstStrategy
+			module Burst
 				# Allows tasks to cluster within windows for high-throughput scenarios.
 				#
 				# Greedy strategies permit multiple tasks to start immediately as long as
