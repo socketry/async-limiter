@@ -28,30 +28,6 @@ describe Async::Limiter::Generic do
 		expect(result).to be == "executed"
 	end
 	
-	it "supports non-blocking acquire" do
-		expect(semaphore.acquire(timeout: 0)).to be == true
-	end
-	
-	it "supports timeout parameter" do
-		# Non-blocking (timeout: 0)
-		expect(semaphore.acquire(timeout: 0)).to be == true
-		
-		# Blocking with timeout (should succeed immediately for unlimited)
-		expect(semaphore.acquire(timeout: 1.0)).to be == true
-		
-		# Blocking without timeout (should succeed immediately for unlimited)
-		expect(semaphore.acquire(timeout: nil)).to be == true
-	end
-	
-	it "supports non-blocking acquire with block" do
-		result = nil
-		resource = semaphore.acquire(timeout: 0) do
-			result = "executed"
-		end
-		expect(resource).to be == "executed"  # Block return value
-		expect(result).to be == "executed"
-	end
-	
 	it "supports async execution" do
 		results = []
 		

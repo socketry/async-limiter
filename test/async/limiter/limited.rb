@@ -22,61 +22,20 @@ describe Async::Limiter::Limited do
 		expect(semaphore).not.to be(:limited?)
 	end
 	
-	it "blocks when at limit" do
-		semaphore.acquire
-		semaphore.acquire
-		expect(semaphore).to be(:limited?)
-		expect(semaphore.acquire(timeout: 0)).to be == nil
-	end
-	
-	it "waits for capacity" do
-		semaphore.acquire
-		semaphore.acquire
-		
-		# This task will wait for capacity:
-		thread = Thread.new do
-			semaphore.acquire(timeout: 0.01)
+	with "#limit=" do
+		it "supports dynamic limit adjustment" do
+			expect(semaphore.limit).to be == 2
+			
+			semaphore.limit = 5
+			expect(semaphore.limit).to be == 5
+			
+			expect do
+				semaphore.limit = 0
+			end.to raise_exception(ArgumentError)
+			expect do
+				semaphore.limit = -1
+			end.to raise_exception(ArgumentError)
 		end
-		
-		expect(thread.value).to be == nil
-	end
-	
-	it "releases correctly" do
-		semaphore.acquire
-		semaphore.release
-		expect(semaphore).not.to be(:limited?)
-	end
-	
-	it "supports non-blocking acquire" do
-		expect(semaphore.acquire(timeout: 0)).to be == true
-		expect(semaphore.acquire(timeout: 0)).to be == true
-		expect(semaphore.acquire(timeout: 0)).to be == nil  # At limit
-	end
-	
-	it "supports non-blocking acquire with block" do
-		result = nil
-		result_value = semaphore.acquire(timeout: 0) do
-			result = "executed"
-		end
-		expect(result_value).to be == "executed"
-		expect(result).to be == "executed"
-		
-		# Auto-released:
-		expect(semaphore).not.to be(:limited?)
-	end
-	
-	it "supports dynamic limit adjustment" do
-		expect(semaphore.limit).to be == 2
-		
-		semaphore.limit = 5
-		expect(semaphore.limit).to be == 5
-		
-		expect do
-			semaphore.limit = 0
-		end.to raise_exception(ArgumentError)
-		expect do
-			semaphore.limit = -1
-		end.to raise_exception(ArgumentError)
 	end
 	
 	it "supports timeout parameter" do

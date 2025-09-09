@@ -40,6 +40,26 @@ module Async
 				expect(result).to be == true
 			end
 			
+			it "supports non-blocking acquire" do
+				# Non-blocking (timeout: 0) should work for all limiters
+				result = limiter.acquire(timeout: 0)
+				expect(result).to be_truthy
+			end
+			
+			it "supports non-blocking acquire with block" do
+				result = limiter.acquire(timeout: 0) do
+					"non-blocking result"
+				end
+				
+				expect(result).to be == "non-blocking result"
+			end
+			
+			it "supports timeout parameter" do
+				# Basic timeout functionality should work for all limiters
+				result = limiter.acquire(timeout: 0.01)
+				expect(result).to be_truthy
+			end
+			
 			with "concurrency" do
 				include Sus::Fixtures::Async::SchedulerContext
 				
