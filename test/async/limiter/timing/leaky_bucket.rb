@@ -5,6 +5,7 @@
 
 require "async/limiter/timing/leaky_bucket"
 require "async/clock"
+require "async/deadline"
 require "sus/fixtures/async/scheduler_context"
 
 describe Async::Limiter::Timing::LeakyBucket do
@@ -133,6 +134,35 @@ describe Async::Limiter::Timing::LeakyBucket do
 		it "validates maximum cost" do
 			bucket = subject.new(1.0, 3.0)  # Capacity 3
 			expect(bucket.maximum_cost).to be == 3.0
+		end
+	end
+	
+	with "#wait with deadlines" do
+		it "returns false immediately for expired deadlines" do
+			# Create a full bucket so it would normally need to wait
+			bucket = subject.new(1.0, 2.0, initial_level: 2.0)
+			
+			# Create an already expired deadline
+			expired_deadline = Async::Deadline.new(0.001)
+			sleep(0.002)  # Ensure deadline is expired
+			
+			mutex = Mutex.new
+			result = bucket.wait(mutex, expired_deadline, 1.0)
+			expect(result).to be == false
+		end
+		
+		it "returns false when wait time would exceed deadline" do
+			# Create a full bucket with slow leak rate
+			bucket = subject.new(1.0, 2.0, initial_level: 2.0)  # Rate 1.0/sec, full at 2.0
+			
+			# Create a short deadline (100ms)
+			short_deadline = Async::Deadline.new(0.1)
+			
+			# Trying to acquire cost 1.0 would require ~1 second to leak enough space
+			# But deadline is only 100ms, so should return false
+			mutex = Mutex.new
+			result = bucket.wait(mutex, short_deadline, 1.0)
+			expect(result).to be == false
 		end
 	end
 end
