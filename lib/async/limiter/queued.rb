@@ -53,7 +53,7 @@ module Async
 			
 			# Release a previously acquired resource.
 			def release(value = true)
-				# Return a default resource to the queue
+				# Return a default resource to the queue:
 				@queue.push(value)
 			end
 			
@@ -61,7 +61,10 @@ module Async
 			
 			# Acquire a resource from the queue with optional deadline.
 			def acquire_concurrency(deadline = nil, **options)
-				@queue.pop(timeout: deadline&.remaining, **options)
+				@mutex.unlock
+				return @queue.pop(timeout: deadline&.remaining, **options)
+			ensure
+				@mutex.lock
 			end
 		end
 	end

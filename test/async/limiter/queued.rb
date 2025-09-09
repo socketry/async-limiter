@@ -16,54 +16,54 @@ describe Async::Limiter::Queued do
 	
 	with "empty queue" do
 		include Sus::Fixtures::Async::SchedulerContext
-
+		
 		let(:queue) {Async::Queue.new}
-		let(:semaphore) {Async::Limiter::Queued.new(queue)}
+		let(:limiter) {Async::Limiter::Queued.new(queue)}
 		
 		it "starts empty and blocking" do
-			expect(semaphore).to be(:limited?)
-			expect(semaphore.acquire(timeout: 0)).to be == nil
+			expect(limiter).to be(:limited?)
+			expect(limiter.acquire(timeout: 0)).to be == nil
 		end
 		
 		it "can add resources via release" do
-			3.times {semaphore.release("resource")}
-			expect(semaphore).not.to be(:limited?)
-			expect(semaphore.acquire(timeout: 0)).to be == "resource"
+			3.times {limiter.release("resource")}
+			expect(limiter).not.to be(:limited?)
+			expect(limiter.acquire(timeout: 0)).to be == "resource"
 		end
 		
 		it "acquires resources from queue" do
-			semaphore.release("test_resource")
+			limiter.release("test_resource")
 			
-			result = semaphore.acquire
+			result = limiter.acquire
 			expect(result).to be == "test_resource"
-			expect(semaphore).to be(:limited?)
+			expect(limiter).to be(:limited?)
 		end
 		
 		it "supports acquire with block and auto-release" do
-			semaphore.release("block_resource")
+			limiter.release("block_resource")
 			
 			result = nil
-			semaphore.acquire do
+			limiter.acquire do
 				result = "executed"
 			end
 			
 			expect(result).to be == "executed"
 			# Resource should be returned to queue
-			expect(semaphore).not.to be(:limited?)
+			expect(limiter).not.to be(:limited?)
 		end
 		
 		it "supports non-blocking acquire" do
-			expect(semaphore.acquire(timeout: 0)).to be == nil  # Empty queue returns false
+			expect(limiter.acquire(timeout: 0)).to be == nil  # Empty queue returns false
 			
-			semaphore.release("resource")
-			expect(semaphore.acquire(timeout: 0)).to be == "resource"
+			limiter.release("resource")
+			expect(limiter.acquire(timeout: 0)).to be == "resource"
 		end
 		
 		it "supports non-blocking acquire with block" do
-			semaphore.release("test_resource")
+			limiter.release("test_resource")
 			
 			result = nil
-			resource = semaphore.acquire(timeout: 0) do
+			resource = limiter.acquire(timeout: 0) do
 				result = "executed"
 			end
 			
@@ -71,35 +71,83 @@ describe Async::Limiter::Queued do
 			expect(result).to be == "executed"
 			
 			# Resource returned:
-			expect(semaphore).not.to be(:limited?)
+			expect(limiter).not.to be(:limited?)
 		end
 		
 		it "supports priority and timeout options" do
-			semaphore.release("priority_resource")
+			limiter.release("priority_resource")
 			
 			# Test that options are accepted and forwarded to queue
-			result = semaphore.acquire(timeout: 1.0)
+			result = limiter.acquire(timeout: 1.0)
 			expect(result).to be == "priority_resource"
-			expect(semaphore).to be(:limited?)
+			expect(limiter).to be(:limited?)
 		end
 		
 		it "supports expand method to add resources" do
 			# Start with empty queue
-			expect(semaphore).to be(:limited?)
+			expect(limiter).to be(:limited?)
 			
 			# Expand with multiple resources
-			semaphore.expand(3, "expanded_resource")
+			limiter.expand(3, "expanded_resource")
 			
 			# Should now have resources available
-			expect(semaphore).not.to be(:limited?)
+			expect(limiter).not.to be(:limited?)
 			
 			# Should be able to acquire the expanded resources
-			expect(semaphore.acquire(timeout: 0)).to be == "expanded_resource"
-			expect(semaphore.acquire(timeout: 0)).to be == "expanded_resource"
-			expect(semaphore.acquire(timeout: 0)).to be == "expanded_resource"
+			expect(limiter.acquire(timeout: 0)).to be == "expanded_resource"
+			expect(limiter.acquire(timeout: 0)).to be == "expanded_resource"
+			expect(limiter.acquire(timeout: 0)).to be == "expanded_resource"
 			
 			# Should be empty again
-			expect(semaphore).to be(:limited?)
+			expect(limiter).to be(:limited?)
+		end
+	end
+	
+	with "priority queue" do
+		include Sus::Fixtures::Async::SchedulerContext
+		
+		let(:queue) {Async::PriorityQueue.new}
+		let(:limiter) {Async::Limiter::Queued.new(queue)}
+		
+		it "executes tasks in priority order" do
+			results = []
+			
+			# Start tasks with different priorities
+			tasks = [
+				Async do
+					result = limiter.acquire(priority: 1, timeout: 1.0) do |worker|
+						"Low priority task used #{worker}"
+					end
+					results << result
+				end,
+				
+				Async do
+					result = limiter.acquire(priority: 10, timeout: 1.0) do |worker|
+						"High priority task used #{worker}"
+					end
+					results << result
+				end,
+				
+				Async do
+					result = limiter.acquire(priority: 5, timeout: 1.0) do |worker|
+						"Medium priority task used #{worker}"
+					end
+					results << result
+				end
+			]
+			
+			# Add some "workers":
+			2.times do |i|
+				limiter.release("worker_#{i}")
+			end
+				
+			tasks.each(&:wait)
+			
+			expect(results).to be == [
+				"High priority task used worker_0",
+				"Medium priority task used worker_1",
+				"Low priority task used worker_0",
+			]
 		end
 	end
 end

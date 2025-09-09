@@ -19,7 +19,7 @@ describe Async::Limiter::Timing::Ordered do
 			expect(ordered.maximum_cost).to be == Float::INFINITY
 		end
 	end
-
+	
 	with "#acquire" do
 		it "delegates acquire" do
 			# None strategy doesn't maintain state, so just verify no errors
@@ -39,7 +39,7 @@ describe Async::Limiter::Timing::Ordered do
 			ordered_bucket = subject.new(bucket_timing)
 			
 			# Fill bucket to capacity
-			2.times { ordered_bucket.acquire(1.0) }
+			2.times {ordered_bucket.acquire(1.0)}
 			
 			# Should timeout when no capacity available
 			deadline = Async::Deadline.new(0.1)

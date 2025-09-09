@@ -97,6 +97,9 @@ module Async
 					# Record timing acquisition if successful
 					if resource
 						@timing.acquire(cost)
+					else
+						# `acquire_concurrency` should return nil if deadline reached:
+						return nil
 					end
 					
 					resource

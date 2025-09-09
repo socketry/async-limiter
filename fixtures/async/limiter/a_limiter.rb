@@ -59,7 +59,7 @@ module Async
 				result = limiter.acquire(timeout: 0.01)
 				expect(result).to be_truthy
 			end
-
+			
 			with "#acquire_token" do
 				it "supports acquire_token with resources" do
 					token = limiter.acquire_token
