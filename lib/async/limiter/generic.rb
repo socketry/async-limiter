@@ -25,7 +25,7 @@ module Async
 			def initialize(timing: Timing::None, parent: nil)
 				@timing = timing
 				@parent = parent
-
+				
 				@mutex = Mutex.new
 			end
 			

@@ -183,26 +183,26 @@ describe Async::Limiter::Limited do
 		expect(tiny_limiter.acquire(cost: 0.5)).to be == true
 	end
 	
-  with "non-blocking acquire" do
+	with "non-blocking acquire" do
 		let(:semaphore) {subject.new(1)}
 		
 		it "does not block" do
 			semaphore.acquire
 			results = []
-
+			
 			# Start multiple tasks with different timeouts:
 			tasks = [
-				Async{semaphore.acquire(timeout: 0.002); results << "Long timeout."},
-				Async{semaphore.acquire(timeout: 0);     results << "Non-blocking."},
-				Async{semaphore.acquire(timeout: 0.001); results << "Short timeout."},
-				Async{semaphore.acquire(timeout: 0);     results << "Non-blocking."},
-			]
-
+					Async{semaphore.acquire(timeout: 0.002); results << "Long timeout."},
+					Async{semaphore.acquire(timeout: 0);     results << "Non-blocking."},
+					Async{semaphore.acquire(timeout: 0.001); results << "Short timeout."},
+					Async{semaphore.acquire(timeout: 0);     results << "Non-blocking."},
+				]
+			
 			tasks.map(&:wait)
 			expect(results).to be == ["Non-blocking.", "Non-blocking.", "Short timeout.", "Long timeout."]
 		end
 	end
-
+	
 	with "timing coordination" do
 		let(:timing) {Async::Limiter::Timing::FixedWindow.new(1.0, Async::Limiter::Timing::BurstStrategy::Greedy, 2)}
 		

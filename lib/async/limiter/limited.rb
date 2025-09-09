@@ -28,7 +28,7 @@ module Async
 				super(timing: timing, parent: parent)
 				@limit = limit
 				@count = 0
-
+				
 				@available = ConditionVariable.new
 			end
 			
