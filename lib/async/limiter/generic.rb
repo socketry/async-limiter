@@ -25,7 +25,8 @@ module Async
 			def initialize(timing: Timing::None, parent: nil)
 				@timing = timing
 				@parent = parent
-				@timing_mutex = Mutex.new
+
+				@mutex = Mutex.new
 			end
 			
 			# Execute a task asynchronously with unlimited concurrency.
@@ -82,9 +83,9 @@ module Async
 				deadline = Deadline.start(timeout)
 				
 				# Atomically handle timing constraints and concurrency logic:
-				@timing_mutex.synchronize do
+				@mutex.synchronize do
 					# Wait for timing constraints to be satisfied (mutex released during sleep)
-					return nil unless @timing.wait(@timing_mutex, deadline, cost)
+					return nil unless @timing.wait(@mutex, deadline, cost)
 					
 					# Execute the concurrency-specific acquisition logic
 					resource = acquire_concurrency(deadline, **options)
@@ -134,7 +135,7 @@ module Async
 			
 			# Release a previously acquired resource.
 			def release(resource = nil)
-				# Default implementation - subclasses should override
+				# Default implementation - subclasses should override.
 			end
 			
 			protected
