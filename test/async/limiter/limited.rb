@@ -25,6 +25,18 @@ describe Async::Limiter::Limited do
 		expect(semaphore.acquire(timeout: 0)).to be == nil
 	end
 	
+	it "waits for capacity" do
+		semaphore.acquire
+		semaphore.acquire
+		
+		# This task will wait for capacity:
+		thread = Thread.new do
+			semaphore.acquire(timeout: 0.01)
+		end
+		
+		expect(thread.value).to be == nil
+	end
+	
 	it "releases correctly" do
 		semaphore.acquire
 		semaphore.release
@@ -53,8 +65,12 @@ describe Async::Limiter::Limited do
 		semaphore.limit = 5
 		expect(semaphore.limit).to be == 5
 		
-		expect {semaphore.limit = 0}.to raise_exception(ArgumentError)
-		expect {semaphore.limit = -1}.to raise_exception(ArgumentError)
+		expect do
+			semaphore.limit = 0
+		end.to raise_exception(ArgumentError)
+		expect do
+			semaphore.limit = -1
+		end.to raise_exception(ArgumentError)
 	end
 	
 	it "supports timeout parameter" do
@@ -120,8 +136,14 @@ describe Async::Limiter::Limited do
 		semaphore.acquire  # 1/2
 		semaphore.acquire  # 2/2
 		
-		# Use a very small timeout to force condition variable timeout
-		result = semaphore.acquire(timeout: 0.001)  # 1ms - very tight
+		# Start an async task that will actually block on condition variable
+		timeout_task = reactor.async do
+			# Use a longer timeout that will actually trigger @condition.wait timeout
+			semaphore.acquire(timeout: 0.05)  # 50ms timeout
+		end
+		
+		# Wait for the task to complete
+		result = timeout_task.wait
 		
 		# Should return nil due to condition variable timeout
 		expect(result).to be == nil
@@ -137,11 +159,13 @@ describe Async::Limiter::Limited do
 		expect(cost_limiter.acquire(cost: 3.0)).to be == true
 		
 		# Cost exceeding capacity should raise error
-		expect {cost_limiter.acquire(cost: 3.1)
-		}.to raise_exception(ArgumentError)
+		expect do
+			cost_limiter.acquire(cost: 3.1)
+		end.to raise_exception(ArgumentError)
 		
-		expect {cost_limiter.acquire(cost: 10.0)
-		}.to raise_exception(ArgumentError)
+		expect do
+			cost_limiter.acquire(cost: 10.0)
+		end.to raise_exception(ArgumentError)
 	end
 	
 	it "validates even small costs against tiny capacity" do
@@ -150,8 +174,9 @@ describe Async::Limiter::Limited do
 		tiny_limiter = Async::Limiter::Limited.new(10, timing: timing)
 		
 		# Even cost: 1 should be rejected
-		expect {tiny_limiter.acquire(cost: 1.0)
-		}.to raise_exception(ArgumentError)
+		expect do
+			tiny_limiter.acquire(cost: 1.0)
+		end.to raise_exception(ArgumentError)
 		
 		# Only very small costs should work
 		expect(tiny_limiter.acquire(cost: 0.3)).to be == true
@@ -160,7 +185,9 @@ describe Async::Limiter::Limited do
 	
 	with "timing coordination" do
 		let(:timing) {Async::Limiter::Timing::FixedWindow.new(1.0, Async::Limiter::Timing::BurstStrategy::Greedy, 2)}
-		let(:semaphore) {Async::Limiter::Limited.new(10, timing: timing)}  # High concurrency limit, low timing limit
+		
+		# High concurrency limit, low timing limit:
+		let(:semaphore) {Async::Limiter::Limited.new(10, timing: timing)}
 		
 		it "prevents timing limit violations under concurrent access" do
 			results = []
