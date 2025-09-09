@@ -101,32 +101,5 @@ describe Async::Limiter::Queued do
 			# Should be empty again
 			expect(semaphore).to be(:limited?)
 		end
-		
-		with "#acquire_token" do
-			it "supports acquire_token with resources" do
-				semaphore.release("token_resource")
-				
-				token = semaphore.acquire_token
-				
-				expect(token).to be_a(Async::Limiter::Token)
-				expect(token.resource).to be == "token_resource"  # Actual resource from queue
-				expect(token.released?).to be == false
-				
-				token.release
-				expect(token.released?).to be == true
-				
-				# Resource returned to queue:
-				expect(semaphore).not.to be(:limited?)
-			end
-			
-			it "supports token with timeout" do
-				# Empty queue:
-				token = semaphore.acquire_token(timeout: 0)
-				
-				# Should get nil resource due to timeout
-				expect(token.resource).to be == nil
-				expect(token.released?).to be == true
-			end
-		end
 	end
 end

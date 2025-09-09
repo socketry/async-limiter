@@ -126,6 +126,8 @@ module Async
 			# @asynchronous
 			def acquire_token(**options)
 				resource = acquire(**options)
+				return nil unless resource
+				
 				token = Token.new(self, resource, **options)
 				
 				return token unless block_given?

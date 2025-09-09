@@ -59,6 +59,20 @@ module Async
 				result = limiter.acquire(timeout: 0.01)
 				expect(result).to be_truthy
 			end
+
+			with "#acquire_token" do
+				it "supports acquire_token with resources" do
+					token = limiter.acquire_token
+					
+					expect(token.released?).to be == false
+					
+					token.release
+					expect(token.released?).to be == true
+					
+					# Resource returned to queue:
+					expect(limiter).not.to be(:limited?)
+				end
+			end
 			
 			with "concurrency" do
 				include Sus::Fixtures::Async::SchedulerContext

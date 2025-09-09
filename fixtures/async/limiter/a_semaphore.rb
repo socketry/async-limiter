@@ -30,6 +30,18 @@ module Async
 				limiter.release
 				expect(limiter).not.to be(:limited?)
 			end
+
+			with "#acquire_token" do
+				it "returns nil when timeout is reached" do
+					# Fill the semaphore to capacity:
+					limiter.acquire
+
+					token = limiter.acquire_token(timeout: 0)
+					
+					# Should get nil token due to timeout (no resources available)
+					expect(token).to be == nil
+				end
+			end
 		end
 	end
 end
