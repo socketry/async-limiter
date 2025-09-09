@@ -1,3 +1,10 @@
-# guides/links.yaml
 getting-started:
   order: 1
+generic-limiter:
+  order: 2  
+limited-limiter:
+  order: 3
+queued-limiter:
+  order: 4
+timing-strategies:
+  order: 5

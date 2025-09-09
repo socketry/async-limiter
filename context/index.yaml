@@ -8,5 +8,29 @@ metadata:
 files:
 - path: getting-started.md
   title: Getting Started
-  description: This guide explains how to get started with `async-limiter` for controlling
-    concurrency and rate limiting in Ruby applications.
+  description: This guide explains how to get started the `async-limiter` gem for
+    controlling concurrency and rate limiting in Ruby applications.
+- path: generic-limiter.md
+  title: Generic Limiter
+  description: This guide explains the <code class="language-ruby">Async::Limiter::Generic</code>
+    class, which provides unlimited concurrency by default and serves as the base
+    implementation for all other limiters. It's ideal when you need timing constraints
+    without concurrency limits, or when building custom limiter implementations.
+- path: limited-limiter.md
+  title: Limited Limiter
+  description: This guide explains the <code class="language-ruby">Async::Limiter::Limited</code>
+    class, which provides semaphore-style concurrency control, enforcing a maximum
+    number of concurrent operations. It's perfect for controlling concurrency when
+    you have limited capacity or want to prevent system overload.
+- path: queued-limiter.md
+  title: Queued Limiter
+  description: This guide explains the <code class="language-ruby">Async::Limiter::Queued</code>
+    class, which provides priority-based task scheduling with optional resource management.
+    Its key feature is priority-based acquisition where higher priority tasks get
+    access first, with optional support for distributing specific resources from a
+    pre-populated queue.
+- path: timing-strategies.md
+  title: Timing Strategies
+  description: This guide explains how to use timing strategies to provide rate limiting
+    and timing constraints that can be combined with any limiter. They control *when*
+    operations can execute, while limiters control *how many* can execute concurrently.
