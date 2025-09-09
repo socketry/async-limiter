@@ -9,6 +9,8 @@ require "async/limiter/timing/leaky_bucket"
 require "sus/fixtures/async/scheduler_context"
 
 describe Async::Limiter::Limited do
+	it_behaves_like Async::Limiter::ALimiter
+	
 	include Sus::Fixtures::Async::SchedulerContext
 	
 	let(:semaphore) {subject.new(2)}

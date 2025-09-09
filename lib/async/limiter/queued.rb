@@ -17,11 +17,18 @@ module Async
 		# Unlike Limited which counts abstract permits, Queued distributes actual
 		# resource objects and supports priority queues for fair allocation.
 		class Queued < Generic
+			# @returns [Queue] A default queue with a single true value.
+			def self.default_queue
+				Queue.new.tap do |queue|
+					queue.push(true)
+				end
+			end
+			
 			# Initialize a queue-based limiter.
 			# @parameter queue [#push, #pop, #empty?] Thread-safe queue containing pre-existing resources.
 			# @parameter timing [#can_acquire?, #acquire, #wait, #maximum_cost] Strategy for timing constraints.
 			# @parameter parent [Async::Task, nil] Parent task for creating child tasks.
-			def initialize(queue = Queue.new, timing: Timing::None, parent: nil)
+			def initialize(queue = self.class.default_queue, timing: Timing::None, parent: nil)
 				super(timing: timing, parent: parent)
 				@queue = queue
 			end

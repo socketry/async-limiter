@@ -7,9 +7,9 @@ require "async/limiter/generic"
 require "async/limiter/a_limiter"
 
 describe Async::Limiter::Generic do
-	include Sus::Fixtures::Async::SchedulerContext
-
 	it_behaves_like Async::Limiter::ALimiter
+
+	include Sus::Fixtures::Async::SchedulerContext
 	
 	let(:semaphore) {Async::Limiter::Generic.new}
 	

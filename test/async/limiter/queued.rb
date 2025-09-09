@@ -9,6 +9,8 @@ require "async/priority_queue"
 require "sus/fixtures/async/scheduler_context"
 
 describe Async::Limiter::Queued do
+	it_behaves_like Async::Limiter::ALimiter
+
 	include Sus::Fixtures::Async::SchedulerContext
 	
 	let(:queue) {Async::Queue.new}
@@ -108,7 +110,6 @@ describe Async::Limiter::Queued do
 			expect(token.released?).to be == true
 			expect(semaphore.can_acquire?).to be == true  # Resource returned to queue
 		end
-		
 		
 		it "supports token with timeout" do
 			# Empty queue
