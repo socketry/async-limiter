@@ -60,7 +60,7 @@ describe Async::Limiter::Limited do
 		end
 		expect(result_value).to be == "executed"
 		expect(result).to be == "executed"
-
+		
 		# Auto-released:
 		expect(semaphore).not.to be(:limited?)
 	end

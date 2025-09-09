@@ -68,7 +68,7 @@ describe Async::Limiter::Queued do
 		
 		expect(resource).to be == "executed"  # Block return value
 		expect(result).to be == "executed"
-
+		
 		# Resource returned:
 		expect(semaphore).not.to be(:limited?)
 	end

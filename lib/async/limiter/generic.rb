@@ -20,7 +20,7 @@ module Async
 		# providing thread-safe acquisition with deadline tracking and cost-based consumption.
 		class Generic
 			# Initialize a new generic limiter.
-			# @parameter timing [#can_acquire?, #acquire, #wait, #maximum_cost] Strategy for timing constraints.
+			# @parameter timing [#acquire, #wait, #maximum_cost] Strategy for timing constraints.
 			# @parameter parent [Async::Task, nil] Parent task for creating child tasks.
 			def initialize(timing: Timing::None, parent: nil)
 				@timing = timing
@@ -32,7 +32,7 @@ module Async
 			def limited?
 				false
 			end
-
+			
 			# Execute a task asynchronously with unlimited concurrency.
 			# @parameter parent [Async::Task] Parent task for the new task.
 			# @parameter options [Hash] Additional options passed to {Async::Task#async}.

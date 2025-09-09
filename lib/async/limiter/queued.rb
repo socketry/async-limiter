@@ -26,7 +26,7 @@ module Async
 			
 			# Initialize a queue-based limiter.
 			# @parameter queue [#push, #pop, #empty?] Thread-safe queue containing pre-existing resources.
-			# @parameter timing [#can_acquire?, #acquire, #wait, #maximum_cost] Strategy for timing constraints.
+			# @parameter timing [#acquire, #wait, #maximum_cost] Strategy for timing constraints.
 			# @parameter parent [Async::Task, nil] Parent task for creating child tasks.
 			def initialize(queue = self.class.default_queue, timing: Timing::None, parent: nil)
 				super(timing: timing, parent: parent)

@@ -19,7 +19,7 @@ module Async
 		class Limited < Generic
 			# Initialize a limited concurrency limiter.
 			# @parameter limit [Integer] Maximum concurrent tasks allowed.
-			# @parameter timing [#can_acquire?, #acquire, #wait, #maximum_cost] Strategy for timing constraints.
+			# @parameter timing [#acquire, #wait, #maximum_cost] Strategy for timing constraints.
 			# @parameter parent [Async::Task, nil] Parent task for creating child tasks.
 			# @raises [ArgumentError] If limit is not positive.
 			def initialize(limit = 1, timing: Timing::None, parent: nil)
