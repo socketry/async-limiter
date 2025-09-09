@@ -60,17 +60,72 @@ module Async
 				expect(result).to be_truthy
 			end
 			
-			with "#acquire_token" do
-				it "supports acquire_token with resources" do
-					token = limiter.acquire_token
+			with Async::Limiter::Token do
+				it "supports Token.acquire without block" do
+					token = Async::Limiter::Token.acquire(limiter)
 					
+					expect(token).to be_a(Async::Limiter::Token)
+					expect(token.resource).to be_truthy
 					expect(token.released?).to be == false
 					
 					token.release
 					expect(token.released?).to be == true
+					expect(token.resource).to be == nil
+				end
+				
+				it "supports Token.acquire with block" do
+					result = nil
+					return_value = Async::Limiter::Token.acquire(limiter) do |token|
+						expect(token).to be_a(Async::Limiter::Token)
+						expect(token.resource).to be_truthy
+						expect(token.released?).to be == false
+						result = "executed"
+					end
 					
-					# Resource returned to queue:
-					expect(limiter).not.to be(:limited?)
+					expect(return_value).to be == "executed"  # Block return value
+					expect(result).to be == "executed"
+				end
+				
+				it "supports token re-acquisition" do
+					token = Async::Limiter::Token.acquire(limiter)
+					expect(token.resource).to be_truthy
+					
+					# Release the token:
+					token.release
+					expect(token.released?).to be == true
+					
+					# Re-acquire with different options:
+					token.acquire(timeout: 0.5, cost: 1.5)
+					expect(token.resource).to be_truthy  # Has resource again
+					expect(token.released?).to be == false  # No longer released
+				end
+				
+				it "supports token re-acquisition with block" do
+					token = Async::Limiter::Token.acquire(limiter)
+					
+					# Release first:
+					token.release
+					
+					# Re-acquire with block:
+					result = token.acquire(cost: 3.0) do |resource|
+						expect(resource).to be_truthy  # Resource from limiter
+						"reacquired"
+					end
+					
+					# token.acquire returns the result of limiter.acquire
+					expect(result).to be == "reacquired"  # Block result
+					expect(token.resource).to be == "reacquired"  # Token stores result
+				end
+				
+				it "handles double release gracefully" do
+					token = Async::Limiter::Token.acquire(limiter)
+					
+					token.release
+					expect(token.released?).to be == true
+					
+					# Second release should be safe:
+					token.release
+					expect(token.released?).to be == true
 				end
 			end
 			

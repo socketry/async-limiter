@@ -84,7 +84,7 @@ require "async/limiter"
 require "async/queue"
 
 Async do
-	# Pre-populate queue with database connections
+	# Pre-populate queue with database connections:
 	queue = Async::Queue.new
 	queue.push("connection_1")
 	queue.push("connection_2") 
@@ -94,11 +94,11 @@ Async do
 	
 	5.times do |i|
 		limiter.async do |task|
-			# Automatically gets an available connection
-			limiter.acquire do |connection|
+		# Automatically gets an available connection:
+		limiter.acquire do |connection|
 				puts "Task #{i} using #{connection}"
 				task.sleep 1
-				# Connection automatically returned to queue
+				# Connection automatically returned to queue:
 			end
 		end
 	end
@@ -127,8 +127,8 @@ return "timeout" unless resource
 
 # With blocks (automatic cleanup)
 limiter.acquire(timeout: 1.0) do |resource|
-	# Use resource
-end  # Automatically released
+	# Use resource.
+end # Automatically released.
 ```
 
 
@@ -143,11 +143,14 @@ require "async"
 require "async/limiter"
 
 Async do
-	# Max 3 tasks within any 1-second sliding window
+	# Max 3 tasks within any 1-second sliding window:
 	timing = Async::Limiter::Timing::SlidingWindow.new(
-		1.0,                                             # 1-second window
-		Async::Limiter::Timing::BurstStrategy::Greedy,   # Allow bursting
-		3                                                # 3 tasks per window
+		# 1-second window:
+		1.0,
+		# Allow bursting:
+		Async::Limiter::Timing::BurstStrategy::Greedy,
+		# 3 tasks per window:
+		3
 	)
 	
 	limiter = Async::Limiter::Limited.new(10, timing: timing)
@@ -166,11 +169,14 @@ end
 Discrete time boundaries:
 
 ```ruby
-# Max 5 tasks per 2-second window with fixed boundaries
+# Max 5 tasks per 2-second window with fixed boundaries:
 timing = Async::Limiter::Timing::FixedWindow.new(
-	2.0,                                             # 2-second windows
-	Async::Limiter::Timing::BurstStrategy::Greedy,   # Allow bursting
-	5                                                # 5 tasks per window
+	# 2-second windows:
+	2.0,
+	# Allow bursting:
+	Async::Limiter::Timing::BurstStrategy::Greedy,
+	# 5 tasks per window:
+	5
 )
 
 limiter = Async::Limiter::Limited.new(10, timing: timing)
@@ -181,15 +187,17 @@ limiter = Async::Limiter::Limited.new(10, timing: timing)
 Smooth rate limiting with token consumption:
 
 ```ruby
-# 10 tokens per second, bucket capacity of 50 tokens
+# 10 tokens per second, bucket capacity of 50 tokens:
 timing = Async::Limiter::Timing::LeakyBucket.new(
-	10.0,  # 10 tokens/second leak rate
-	50.0   # 50 token capacity
+	# 10 tokens/second leak rate:
+	10.0,
+	# 50 token capacity:
+	50.0
 )
 
 limiter = Async::Limiter::Limited.new(100, timing: timing)
 
-# Bucket starts empty, fills with usage, leaks over time
+# Bucket starts empty, fills with usage, leaks over time:
 ```
 
 ## Cost-Based Acquisition
@@ -197,26 +205,27 @@ limiter = Async::Limiter::Limited.new(100, timing: timing)
 Operations can consume multiple "units" based on their computational weight:
 
 ```ruby
-# Create a leaky bucket with 10 tokens capacity
-timing = Async::Limiter::Timing::LeakyBucket.new(5.0, 10.0)  # 5/sec rate, 10 capacity
+# Create a leaky bucket with 10 tokens capacity:
+# 5/sec rate, 10 capacity:
+timing = Async::Limiter::Timing::LeakyBucket.new(5.0, 10.0)
 limiter = Async::Limiter::Limited.new(100, timing: timing)
 
-# Light operations
+# Light operations:
 limiter.acquire(cost: 0.5) do
 	perform_light_operation()
 end
 
-# Normal operations  
-limiter.acquire(cost: 1.0) do  # Default cost
+# Normal operations:
+limiter.acquire(cost: 1.0) do  # Default cost.
 	perform_standard_operation()
 end
 
-# Heavy operations
+# Heavy operations:
 limiter.acquire(cost: 3.5) do
 	perform_heavy_operation()
 end
 
-# Impossible operations fail fast
+# Impossible operations fail fast:
 begin
 	limiter.acquire(cost: 15.0)  # Exceeds capacity!
 rescue ArgumentError => e
@@ -227,7 +236,7 @@ end
 ### Cost + Timeout Combinations
 
 ```ruby
-# Heavy operation with timeout
+# Heavy operation with timeout:
 result = limiter.acquire(timeout: 30.0, cost: 5.0) do |resource|
 	expensive_computation()
 end
@@ -239,33 +248,7 @@ else
 end
 ```
 
-## Token-Based Resource Management
 
-For advanced resource management with re-acquisition support:
-
-```ruby
-# Acquire a token that can be reused
-token = limiter.acquire_token(priority: 10)
-
-use_resource(token.resource)
-
-# Re-acquire with different priority
-new_token = token.acquire(priority: 5)
-use_resource(new_token.resource)
-
-# Manual cleanup
-token.release
-
-# Or with blocks (automatic cleanup)
-limiter.acquire_token do |token|
-	use_resource(token.resource)
-	
-	# Re-acquire within the same block
-	token.acquire(priority: 1) do |new_token|
-		use_resource_again(new_token.resource)
-	end
-end  # All tokens automatically released
-```
 
 ## Manual Resource Management
 

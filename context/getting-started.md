@@ -27,9 +27,7 @@ $ bundle add async-limiter
 - **{ruby Async::Limiter::Timing::FixedWindow}** - Discrete time boundaries.
 - **{ruby Async::Limiter::Timing::LeakyBucket}** - Token bucket with automatic leaking.
 
-## Basic Usage
-
-### Unlimited Concurrency
+## Usage
 
 The simplest case - no limits:
 
@@ -130,7 +128,6 @@ limiter.acquire(timeout: 1.0) do |resource|
 	# Use resource
 end  # Automatically released
 ```
-
 
 ## Rate Limiting with Timing Strategies
 
@@ -237,34 +234,6 @@ if result
 else
 	puts "Timed out waiting for capacity"
 end
-```
-
-## Token-Based Resource Management
-
-For advanced resource management with re-acquisition support:
-
-```ruby
-# Acquire a token that can be reused
-token = limiter.acquire_token(priority: 10)
-
-use_resource(token.resource)
-
-# Re-acquire with different priority
-new_token = token.acquire(priority: 5)
-use_resource(new_token.resource)
-
-# Manual cleanup
-token.release
-
-# Or with blocks (automatic cleanup)
-limiter.acquire_token do |token|
-	use_resource(token.resource)
-	
-	# Re-acquire within the same block
-	token.acquire(priority: 1) do |new_token|
-		use_resource_again(new_token.resource)
-	end
-end  # All tokens automatically released
 ```
 
 ## Manual Resource Management

@@ -128,8 +128,8 @@ Async do
 		end
 	end
 	
-	# Total: 5 * 0.5 + 3 * 3.0 = 11.5 units
-	# Will be rate limited to 10 units/second
+	# Total: 5 * 0.5 + 3 * 3.0 = 11.5 units.
+	# Will be rate limited to 10 units/second.
 end
 ```
 
@@ -298,7 +298,7 @@ Async do
 		end
 	end
 	
-	# Mixed costs will be rate limited based on total token consumption
+	# Mixed costs will be rate limited based on total token consumption.
 end
 ```
 
@@ -426,7 +426,7 @@ tasks.each(&:wait)
 ```ruby
 class RateLimitedAPIClient
 	def initialize(requests_per_second: 10, burst_capacity: 50)
-		# Leaky bucket allows bursts up to capacity, then steady rate
+		# Leaky bucket allows bursts up to capacity, then steady rate:
 		timing = Async::Limiter::Timing::LeakyBucket.new(
 			requests_per_second.to_f,
 			burst_capacity.to_f
@@ -437,14 +437,14 @@ class RateLimitedAPIClient
 	
 	def make_request(endpoint, cost: 1.0)
 		@limiter.acquire(cost: cost) do
-			# Make actual HTTP request
-			puts "Making request to #{endpoint} at #{Time.now}"
+		# Make actual HTTP request:
+		puts "Making request to #{endpoint} at #{Time.now}"
 			simulate_http_request(endpoint)
 		end
 	end
 	
 	def make_expensive_request(endpoint)
-		# Heavy requests consume more rate limit
+		# Heavy requests consume more rate limit:
 		make_request(endpoint, cost: 5.0)
 	end
 	
@@ -460,12 +460,12 @@ end
 client = RateLimitedAPIClient.new(requests_per_second: 5, burst_capacity: 20)
 
 Async do
-	# Burst of requests (uses burst capacity)
+	# Burst of requests (uses burst capacity):
 	10.times do |i|
 		client.make_request("/api/data/#{i}")
 	end
 	
-	# Mix of normal and expensive requests
+	# Mix of normal and expensive requests:
 	5.times do |i|
 		if i.even?
 			client.make_request("/api/normal/#{i}")

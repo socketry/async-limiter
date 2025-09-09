@@ -114,33 +114,6 @@ module Async
 				end
 			end
 			
-			# Acquire a token that encapsulates the acquired resource and acquisition options.
-			#
-			# Tokens provide advanced resource management with support for re-acquisition
-			# using different options (priority, timeout, cost, etc.).
-			#
-			# @parameter timeout [Numeric, nil] Timeout in seconds (nil = wait forever, 0 = non-blocking).
-			# @parameter cost [Numeric] The cost/weight of this operation for timing strategies (default: 1).
-			# @parameter options [Hash] Additional options (priority, etc.) stored for re-acquisition.
-			# @yields {|token| ...} Optional block executed with automatic token release.
-			#   @parameter token [Token] The acquired token object.
-			# @returns [Token] A token object that can release or re-acquire the resource.
-			# @raises [ArgumentError] If cost exceeds the timing strategy's maximum supported cost.
-			# @asynchronous
-			def acquire_token(**options)
-				resource = acquire(**options)
-				return nil unless resource
-				
-				token = Token.new(self, resource, **options)
-				
-				return token unless block_given?
-				
-				begin
-					yield(token)
-				ensure
-					token.release
-				end
-			end
 			
 			# Release a previously acquired resource.
 			def release(resource = nil)

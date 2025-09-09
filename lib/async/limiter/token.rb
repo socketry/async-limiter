@@ -14,14 +14,38 @@ module Async
 		# The token automatically tracks release state using the resource itself as the
 		# state indicator (nil = released, non-nil = acquired).
 		class Token
+			# Acquire a token from a limiter.
+			#
+			# This class method provides a clean way to acquire tokens without
+			# adding token-specific methods to limiter classes.
+			#
+			# @parameter limiter [Generic] The limiter to acquire from.
+			# @parameter options [Hash] Acquisition options (timeout, cost, priority, etc.).
+			# @yields {|token| ...} Optional block executed with automatic token release.
+			#   @parameter token [Token] The acquired token object.
+			# @returns [Token, nil] A token object, or nil if acquisition failed.
+			# @raises [ArgumentError] If cost exceeds the timing strategy's maximum supported cost.
+			# @asynchronous
+			def self.acquire(limiter, **options, &block)
+				resource = limiter.acquire(**options)
+				return nil unless resource
+				
+				token = new(limiter, resource)
+				
+				return token unless block_given?
+				
+				begin
+					yield(token)
+				ensure
+					token.release
+				end
+			end
 			# Initialize a new token.
 			# @parameter limiter [Generic] The limiter that issued this token.
 			# @parameter resource [Object] The acquired resource.
-			# @parameter options [Hash] Options used for acquisition (timeout, cost, priority, etc.).
-			def initialize(limiter, resource, **options)
+			def initialize(limiter, resource)
 				@limiter = limiter
 				@resource = resource
-				@options = options
 			end
 			
 			# @attribute [Object] The acquired resource (nil if released).
@@ -29,10 +53,10 @@ module Async
 			
 			# Release the token back to the limiter.
 			def release
-				return unless @resource
-				
-				@limiter.release(@resource)
-				@resource = nil
+				if resource = @resource
+					@resource = nil
+					@limiter.release(resource)
+				end
 			end
 			
 			# Re-acquire the resource with modified options.
@@ -46,18 +70,8 @@ module Async
 			# @returns [Token] A new token for the re-acquired resource.
 			# @raises [ArgumentError] If the new cost exceeds timing strategy capacity.
 			# @asynchronous
-			def acquire(**new_options, &block)
-				release  # Release current resource
-				
-				# Merge original options with new ones (new ones take precedence)
-				merged_options = @options.merge(new_options)
-				
-				# Re-acquire directly and update this token's state
-				@resource = @limiter.acquire(**merged_options, &block)
-				@options = merged_options
-				
-				# Return this token (now updated) or block result
-				block_given? ? @resource : self
+			def acquire(**options, &block)
+				@resource ||= @limiter.acquire(**options, &block)
 			end
 			
 			# Check if the token has been released.

@@ -8,3 +8,5 @@ queued-limiter:
   order: 4
 timing-strategies:
   order: 5
+token-usage:
+  order: 6
