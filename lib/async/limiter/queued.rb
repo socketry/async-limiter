@@ -38,8 +38,8 @@ module Async
 			
 			# Check if a new task can be acquired.
 			# @returns [Boolean] True if resources are available.
-			def can_acquire?
-				!@queue.empty?
+			def limited?
+				@queue.empty?
 			end
 			
 			# Expand the queue with additional resources.

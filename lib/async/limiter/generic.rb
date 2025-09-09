@@ -29,6 +29,10 @@ module Async
 				@mutex = Mutex.new
 			end
 			
+			def limited?
+				false
+			end
+
 			# Execute a task asynchronously with unlimited concurrency.
 			# @parameter parent [Async::Task] Parent task for the new task.
 			# @parameter options [Hash] Additional options passed to {Async::Task#async}.

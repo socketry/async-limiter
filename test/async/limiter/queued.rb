@@ -20,13 +20,13 @@ describe Async::Limiter::Queued do
 	let(:semaphore) {Async::Limiter::Queued.new(queue)}
 	
 	it "starts empty and blocking" do
-		expect(semaphore.can_acquire?).to be == false
+		expect(semaphore).to be(:limited?)
 		expect(semaphore.acquire(timeout: 0)).to be == nil
 	end
 	
 	it "can add resources via release" do
 		3.times {semaphore.release("resource")}
-		expect(semaphore.can_acquire?).to be == true
+		expect(semaphore).not.to be(:limited?)
 		expect(semaphore.acquire(timeout: 0)).to be == "resource"
 	end
 	
@@ -35,7 +35,7 @@ describe Async::Limiter::Queued do
 		
 		result = semaphore.acquire
 		expect(result).to be == "test_resource"
-		expect(semaphore.can_acquire?).to be == false
+		expect(semaphore).to be(:limited?)
 	end
 	
 	it "supports acquire with block and auto-release" do
@@ -48,7 +48,7 @@ describe Async::Limiter::Queued do
 		
 		expect(result).to be == "executed"
 		# Resource should be returned to queue
-		expect(semaphore.can_acquire?).to be == true
+		expect(semaphore).not.to be(:limited?)
 	end
 	
 	it "supports non-blocking acquire" do
@@ -68,7 +68,9 @@ describe Async::Limiter::Queued do
 		
 		expect(resource).to be == "executed"  # Block return value
 		expect(result).to be == "executed"
-		expect(semaphore.can_acquire?).to be == true  # Resource returned
+
+		# Resource returned:
+		expect(semaphore).not.to be(:limited?)
 	end
 	
 	it "supports priority and timeout options" do
@@ -77,18 +79,18 @@ describe Async::Limiter::Queued do
 		# Test that options are accepted and forwarded to queue
 		result = semaphore.acquire(timeout: 1.0)
 		expect(result).to be == "priority_resource"
-		expect(semaphore.can_acquire?).to be == false
+		expect(semaphore).to be(:limited?)
 	end
 	
 	it "supports expand method to add resources" do
 		# Start with empty queue
-		expect(semaphore.can_acquire?).to be == false
+		expect(semaphore).to be(:limited?)
 		
 		# Expand with multiple resources
 		semaphore.expand(3, "expanded_resource")
 		
 		# Should now have resources available
-		expect(semaphore.can_acquire?).to be == true
+		expect(semaphore).not.to be(:limited?)
 		
 		# Should be able to acquire the expanded resources
 		expect(semaphore.acquire(timeout: 0)).to be == "expanded_resource"
@@ -96,7 +98,7 @@ describe Async::Limiter::Queued do
 		expect(semaphore.acquire(timeout: 0)).to be == "expanded_resource"
 		
 		# Should be empty again
-		expect(semaphore.can_acquire?).to be == false
+		expect(semaphore).to be(:limited?)
 	end
 	
 	with "#acquire_token" do
@@ -111,7 +113,9 @@ describe Async::Limiter::Queued do
 			
 			token.release
 			expect(token.released?).to be == true
-			expect(semaphore.can_acquire?).to be == true  # Resource returned to queue
+			
+			# Resource returned to queue:
+			expect(semaphore).not.to be(:limited?)
 		end
 		
 		it "supports token with timeout" do

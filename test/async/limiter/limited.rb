@@ -19,13 +19,13 @@ describe Async::Limiter::Limited do
 	
 	it "enforces the limit" do
 		expect(semaphore.limit).to be == 2
-		expect(semaphore.can_acquire?).to be == true
+		expect(semaphore).not.to be(:limited?)
 	end
 	
 	it "blocks when at limit" do
 		semaphore.acquire
 		semaphore.acquire
-		expect(semaphore.can_acquire?).to be == false
+		expect(semaphore).to be(:limited?)
 		expect(semaphore.acquire(timeout: 0)).to be == nil
 	end
 	
@@ -44,7 +44,7 @@ describe Async::Limiter::Limited do
 	it "releases correctly" do
 		semaphore.acquire
 		semaphore.release
-		expect(semaphore.can_acquire?).to be == true
+		expect(semaphore).not.to be(:limited?)
 	end
 	
 	it "supports non-blocking acquire" do
@@ -60,7 +60,9 @@ describe Async::Limiter::Limited do
 		end
 		expect(result_value).to be == "executed"
 		expect(result).to be == "executed"
-		expect(semaphore.can_acquire?).to be == true  # Auto-released
+
+		# Auto-released:
+		expect(semaphore).not.to be(:limited?)
 	end
 	
 	it "supports dynamic limit adjustment" do

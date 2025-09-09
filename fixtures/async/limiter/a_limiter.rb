@@ -12,7 +12,7 @@ module Async
 			let(:limiter) {subject.new}
 			
 			it "can acquire" do
-				expect(limiter).to be(:can_acquire?)
+				expect(limiter).not.to be(:limited?)
 				expect(limiter.acquire).to be == true
 			end
 			

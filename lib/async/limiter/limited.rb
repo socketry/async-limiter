@@ -40,8 +40,8 @@ module Async
 			
 			# Check if a new task can be acquired.
 			# @returns [Boolean] True if under the limit.
-			def can_acquire?
-				@mutex.synchronize {@count < @limit}
+			def limited?
+				@mutex.synchronize{@count >= @limit}
 			end
 			
 			# Release a previously acquired resource.
