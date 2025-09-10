@@ -112,9 +112,11 @@ module Async
 						"reacquired"
 					end
 					
-					# token.acquire returns the result of limiter.acquire
-					expect(result).to be == "reacquired"  # Block result
-					expect(token.resource).to be == "reacquired"  # Token stores result
+					# Block result:
+					expect(result).to be == "reacquired"
+					
+					# Token should be released:
+					expect(token).to be(:released?)
 				end
 				
 				it "handles double release gracefully" do

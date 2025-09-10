@@ -115,32 +115,31 @@ describe Async::Limiter::Queued do
 			# Start tasks with different priorities
 			tasks = [
 				Async do
-					result = limiter.acquire(priority: 1, timeout: 1.0) do |worker|
-						"Low priority task used #{worker}"
+					limiter.acquire(priority: 1, timeout: 1.0) do |worker|
+						results << "Low priority task used #{worker}"
 					end
-					results << result
 				end,
 				
 				Async do
-					result = limiter.acquire(priority: 10, timeout: 1.0) do |worker|
-						"High priority task used #{worker}"
+					limiter.acquire(priority: 10, timeout: 1.0) do |worker|
+						results << "High priority task used #{worker}"
 					end
-					results << result
 				end,
 				
 				Async do
-					result = limiter.acquire(priority: 5, timeout: 1.0) do |worker|
-						"Medium priority task used #{worker}"
+					limiter.acquire(priority: 5, timeout: 1.0) do |worker|
+						results << "Medium priority task used #{worker}"
 					end
-					results << result
 				end
 			]
+			
+			sleep 0.5
 			
 			# Add some "workers":
 			2.times do |i|
 				limiter.release("worker_#{i}")
 			end
-				
+			
 			tasks.each(&:wait)
 			
 			expect(results).to be == [

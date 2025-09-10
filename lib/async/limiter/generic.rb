@@ -22,13 +22,18 @@ module Async
 			# Initialize a new generic limiter.
 			# @parameter timing [#acquire, #wait, #maximum_cost] Strategy for timing constraints.
 			# @parameter parent [Async::Task, nil] Parent task for creating child tasks.
-			def initialize(timing: Timing::None, parent: nil)
+			def initialize(timing: Timing::None, parent: nil, tags: nil)
 				@timing = timing
 				@parent = parent
+				@tags = tags
 				
 				@mutex = Mutex.new
 			end
 			
+			# @attribute [Array(String)] Tags associated with this limiter for identification or categorization.
+			attr :tags
+			
+			# @returns [Boolean] Whether this limiter is currently limiting concurrency.
 			def limited?
 				false
 			end
@@ -87,12 +92,12 @@ module Async
 				deadline = Deadline.start(timeout)
 				
 				# Atomically handle timing constraints and concurrency logic:
-				@mutex.synchronize do
+				acquire_synchronized(timeout, cost, **options) do
 					# Wait for timing constraints to be satisfied (mutex released during sleep)
 					return nil unless @timing.wait(@mutex, deadline, cost)
 					
 					# Execute the concurrency-specific acquisition logic
-					resource = acquire_concurrency(deadline, **options)
+					resource = acquire_resource(deadline, **options)
 					
 					# Record timing acquisition if successful
 					if resource
@@ -114,19 +119,30 @@ module Async
 				end
 			end
 			
-			
 			# Release a previously acquired resource.
-			def release(resource = nil)
-				# Default implementation - subclasses should override.
+			def release(resource = true)
+				release_resource(resource)
 			end
 			
 			protected
 			
-			# Default concurrency acquisition for unlimited semaphore.
+			def acquire_synchronized(timeout, cost, **options)
+				@mutex.synchronize do
+					yield
+				end
+			end
+			
+			# Default resource acquisition for unlimited semaphore.
 			# Subclasses should override this method.
-			def acquire_concurrency(deadline = nil, **options)
+			def acquire_resource(deadline, **options)
 				# Default unlimited behavior - always succeeds
 				true
+			end
+			
+			# Default resource release for unlimited semaphore.
+			# Subclasses should override this method.
+			def release_resource(resource)
+				# Default implementation - subclasses should override.
 			end
 		end
 	end

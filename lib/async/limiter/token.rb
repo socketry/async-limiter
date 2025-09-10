@@ -71,7 +71,17 @@ module Async
 			# @raises [ArgumentError] If the new cost exceeds timing strategy capacity.
 			# @asynchronous
 			def acquire(**options, &block)
-				@resource ||= @limiter.acquire(**options, &block)
+				raise "Token already acquired!" if @resource
+				
+				@resource = @limiter.acquire(**options)
+				
+				return @resource unless block_given?
+				
+				begin
+					return yield(@resource)
+				ensure
+					self.release
+				end
 			end
 			
 			# Check if the token has been released.

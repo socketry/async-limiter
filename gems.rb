@@ -47,6 +47,9 @@ group :test do
 	
 	gem "sus-fixtures-async"
 	
+	gem "traces"
+	gem "metrics"
+	
 	gem "bake"
 	gem "bake-test"
 	gem "bake-test-external"

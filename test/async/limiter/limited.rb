@@ -15,7 +15,7 @@ describe Async::Limiter::Limited do
 	
 	with "small limit" do
 		include Sus::Fixtures::Async::SchedulerContext
-
+		
 		let(:limiter) {subject.new(2)}
 		
 		it "enforces the limit" do
@@ -167,7 +167,7 @@ describe Async::Limiter::Limited do
 			end
 		end
 	end
-
+	
 	with "greedy fixed window" do
 		include Sus::Fixtures::Async::SchedulerContext
 		
