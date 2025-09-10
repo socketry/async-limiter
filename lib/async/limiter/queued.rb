@@ -54,7 +54,7 @@ module Async
 			protected
 			
 			# Acquire a resource from the queue with optional deadline.
-			def acquire_resource(deadline, **options)
+			def acquire_resource(deadline, reacquire: false, **options)
 				@mutex.unlock
 				return @queue.pop(timeout: deadline&.remaining, **options)
 			ensure

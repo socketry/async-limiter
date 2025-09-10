@@ -16,6 +16,7 @@ Traces::Provider(Async::Limiter::Generic) do
 			"cost" => cost,
 			"timeout" => timeout,
 			"priority" => options[:priority],
+			"reacquire" => options[:reacquire] || false,
 		}
 		
 		if @tags

@@ -73,7 +73,7 @@ module Async
 			def acquire(**options, &block)
 				raise "Token already acquired!" if @resource
 				
-				@resource = @limiter.acquire(**options)
+				@resource = @limiter.acquire(reacquire: true, **options)
 				
 				return @resource unless block_given?
 				

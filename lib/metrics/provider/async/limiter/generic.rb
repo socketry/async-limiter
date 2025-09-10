@@ -18,7 +18,8 @@ Metrics::Provider(Async::Limiter::Generic) do
 	
 	def acquire_synchronized(timeout, cost, **options)
 		# Build base tags and extend with instance tags if present
-		tags = ["limiter_class:#{self.class.name}", "cost:#{cost}"]
+		is_reacquire = options[:reacquire] || false
+		tags = ["limiter:#{self.class.name}", "cost:#{cost}", "reacquire:#{is_reacquire}"]
 		tags = Metrics::Tags.normalize(@tags, tags)
 		
 		clock = Async::Clock.start
@@ -31,15 +32,15 @@ Metrics::Provider(Async::Limiter::Generic) do
 				ACQUIRE_COUNTER.emit(1, tags: success_tags)
 				ACQUIRE_DURATION.emit(clock.total, tags: success_tags)
 			else
-				# Emit failure metrics
-				error_tags = Metrics::Tags.normalize(["result:error", "error:#{error.class.name}"], tags)
-				ACQUIRE_COUNTER.emit(1, tags: error_tags)
-				ACQUIRE_DURATION.emit(clock.total, tags: error_tags)
+				# Emit failure metrics (timeout/contention)
+				failure_tags = Metrics::Tags.normalize(["result:timeout"], tags)
+				ACQUIRE_COUNTER.emit(1, tags: failure_tags)
+				ACQUIRE_DURATION.emit(clock.total, tags: failure_tags)
 			end
 			
 			return result
 		rescue => error
-			# Emit failure metrics
+			# Emit error metrics
 			error_tags = Metrics::Tags.normalize(["result:error", "error:#{error.class.name}"], tags)
 			ACQUIRE_COUNTER.emit(1, tags: error_tags)
 			ACQUIRE_DURATION.emit(clock.total, tags: error_tags)
@@ -50,7 +51,7 @@ Metrics::Provider(Async::Limiter::Generic) do
 	
 	def release(resource = true)
 		# Build base tags and extend with instance tags if present
-		tags = ["limiter_class:#{self.class.name}"]
+		tags = ["limiter:#{self.class.name}"]
 		tags = Metrics::Tags.normalize(@tags, tags)
 		
 		begin
