@@ -24,7 +24,7 @@ module Async
 			# @raises [ArgumentError] If limit is not positive.
 			def initialize(limit = 1, timing: Timing::None, parent: nil)
 				super(timing: timing, parent: parent)
-
+				
 				@limit = limit
 				@count = 0
 				
@@ -43,14 +43,6 @@ module Async
 				@mutex.synchronize{@count >= @limit}
 			end
 			
-			# Release a previously acquired resource.
-			def release(resource = nil)
-				@mutex.synchronize do
-					@count -= 1
-					@available.signal
-				end
-			end
-			
 			# Update the concurrency limit.
 			# @parameter new_limit [Integer] The new maximum number of concurrent tasks.
 			# @raises [ArgumentError] If new_limit is not positive.
@@ -66,8 +58,8 @@ module Async
 			
 			protected
 			
-			# Acquire concurrency resource with optional deadline.
-			def acquire_concurrency(deadline = nil, **options)
+			# Acquire resource with optional deadline.
+			def acquire_resource(deadline, **options)
 				# Fast path: immediate return for expired deadlines, but only if at capacity
 				return nil if deadline&.expired? && @count >= @limit
 				
@@ -82,7 +74,16 @@ module Async
 				end
 				
 				@count += 1
-				true
+				
+				return true
+			end
+			
+			# Release resource.
+			def release_resource(resource)
+				@mutex.synchronize do
+					@count -= 1
+					@available.signal
+				end
 			end
 		end
 	end
