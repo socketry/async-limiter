@@ -2,6 +2,7 @@
 
 # Released under the MIT License.
 # Copyright, 2020-2021, by Bruno Sutic.
+# Copyright, 2025, by Shopify Inc.
 # Copyright, 2025, by Samuel Williams.
 
 module Async

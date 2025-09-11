@@ -7,7 +7,7 @@ Gem::Specification.new do |spec|
 	spec.version = Async::Limiter::VERSION
 	
 	spec.summary = "Execution rate limiting for Async"
-	spec.authors = ["Bruno Sutic", "Samuel Williams"]
+	spec.authors = ["Bruno Sutic", "Shopify Inc.", "Samuel Williams"]
 	spec.license = "MIT"
 	
 	spec.cert_chain  = ["release.cert"]

@@ -1,6 +1,7 @@
 # MIT License
 
 Copyright, 2020-2021, by Bruno Sutic.  
+Copyright, 2025, by Shopify Inc.  
 Copyright, 2025, by Samuel Williams.  
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
