@@ -125,6 +125,16 @@ module Async
 				release_resource(resource)
 			end
 			
+			# Get current limiter statistics.
+			# @returns [Hash] Statistics hash with current state.
+			def statistics
+				@mutex.synchronize do
+					{
+						timing: @timing.statistics
+					}
+				end
+			end
+			
 			protected
 			
 			def acquire_synchronized(timeout, cost, **options)

@@ -44,6 +44,14 @@ module Async
 						@delegate.wait(mutex, deadline, cost)
 					end
 				end
+				
+				# Get current timing strategy statistics from delegate.
+				# @returns [Hash] Statistics hash with current state.
+				def statistics
+					statistics = @delegate.statistics.dup
+					statistics[:ordered] = true
+					statistics
+				end
 			end
 		end
 	end

@@ -52,6 +52,16 @@ module Async
 				end
 			end
 			
+			def statistics
+				@mutex.synchronize do
+					{
+						waiting: @queue.waiting_count,
+						available: @queue.size,
+						timing: @timing.statistics
+					}
+				end
+			end
+			
 			protected
 			
 			# Acquire a resource from the queue with optional deadline.

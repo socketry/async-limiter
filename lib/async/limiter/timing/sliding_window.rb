@@ -134,6 +134,21 @@ module Async
 					@frame_start_time + frame_duration <= current_time
 				end
 			end
+			
+			# Get current timing strategy statistics.
+			# @returns [Hash] Statistics hash with current state.
+			def statistics
+				current_time = Time.now
+				
+				{
+					timing_strategy: "SlidingWindow",
+					window_duration: @duration,
+					window_limit: @limit,
+					current_window_count: @window_count,
+					window_utilization_percentage: (@window_count.to_f / @limit) * 100,
+					burst_strategy: @burst.class.name.split('::').last
+				}
+			end
 		end
 	end
 end
