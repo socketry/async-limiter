@@ -19,11 +19,7 @@ Traces::Provider(Async::Limiter::Generic) do
 			"reacquire" => options[:reacquire] || false,
 		}
 		
-		if @tags
-			@tags.each_with_index do |tag, index|
-				attributes["tag_#{index}"] = tag
-			end
-		end
+		attributes.merge!(@tags) if @tags
 		
 		Traces.trace("async.limiter.acquire", attributes: attributes) do
 			super
@@ -35,11 +31,7 @@ Traces::Provider(Async::Limiter::Generic) do
 			"limiter.class" => self.class.name,
 		}
 		
-		if @tags
-			@tags.each_with_index do |tag, index|
-				attributes["tag_#{index}"] = tag
-			end
-		end
+		attributes.merge!(@tags) if @tags
 		
 		Traces.trace("async.limiter.release", attributes: attributes) do
 			super
