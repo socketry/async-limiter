@@ -52,6 +52,8 @@ module Async
 				end
 			end
 			
+			# Get current limiter statistics.
+			# @returns [Hash] Statistics hash with current state.
 			def statistics
 				@mutex.synchronize do
 					{

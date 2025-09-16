@@ -47,7 +47,7 @@ module Async
 				# @returns [Hash] Statistics hash with current state.
 				def self.statistics
 					{
-						timing_strategy: "None"
+						name: "None"
 					}
 				end
 			end

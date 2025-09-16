@@ -77,6 +77,14 @@ module Async
 					def self.frame_blocking?(frame_changed)
 						false  # Burstable mode doesn't use frame blocking
 					end
+					
+					# Get current burst strategy statistics.
+					# @returns [Hash] Statistics hash with current state.
+					def self.statistics
+						{
+							name: "Greedy",
+						}
+					end
 				end
 				
 				# Enforces even task distribution to prevent clustering.
@@ -129,6 +137,14 @@ module Async
 					# @returns [Boolean] True if frame hasn't changed (blocking until next frame).
 					def self.frame_blocking?(frame_changed)
 						!frame_changed
+					end
+					
+					# Get current burst strategy statistics.
+					# @returns [Hash] Statistics hash with current state.
+					def self.statistics
+						{
+							name: "Smooth",
+						}
 					end
 				end
 			end

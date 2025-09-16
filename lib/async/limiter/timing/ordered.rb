@@ -48,9 +48,9 @@ module Async
 				# Get current timing strategy statistics from delegate.
 				# @returns [Hash] Statistics hash with current state.
 				def statistics
-					statistics = @delegate.statistics.dup
-					statistics[:ordered] = true
-					statistics
+					@delegate.statistics.tap do |statistics|
+						statistics[:ordered] = true
+					end
 				end
 			end
 		end
