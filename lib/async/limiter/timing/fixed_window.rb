@@ -21,6 +21,21 @@ module Async
 				def window_start_time(current_time)
 					(current_time / @duration).to_i * @duration
 				end
+				
+				# Get current timing strategy statistics.
+				# @returns [Hash] Statistics hash with current state.
+				def statistics
+					current_time = Time.now
+					
+					{
+						name: "FixedWindow",
+						window_duration: @duration,
+						window_limit: @limit,
+						current_window_count: @window_count,
+						window_utilization_percentage: (@window_count.to_f / @limit) * 100,
+						burst: @burst.statistics,
+					}
+				end
 			end
 		end
 	end

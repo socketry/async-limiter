@@ -112,6 +112,21 @@ module Async
 					leak_bucket
 				end
 				
+				# Get current timing strategy statistics.
+				# @returns [Hash] Statistics hash with current state.
+				def statistics
+					leak_bucket
+					
+					{
+						name: "LeakyBucket",
+						current_level: @level,
+						maximum_capacity: @capacity,
+						leak_rate: @rate,
+						available_capacity: @capacity - @level,
+						utilization_percentage: (@level / @capacity) * 100
+					}
+				end
+				
 				private
 				
 				# Leak the bucket based on elapsed time.

@@ -42,6 +42,14 @@ module Async
 					# No waiting needed - return immediately
 					true
 				end
+				
+				# Get current timing strategy statistics.
+				# @returns [Hash] Statistics hash with current state.
+				def self.statistics
+					{
+						name: "None"
+					}
+				end
 			end
 		end
 	end

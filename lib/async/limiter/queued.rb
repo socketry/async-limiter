@@ -52,6 +52,18 @@ module Async
 				end
 			end
 			
+			# Get current limiter statistics.
+			# @returns [Hash] Statistics hash with current state.
+			def statistics
+				@mutex.synchronize do
+					{
+						waiting: @queue.waiting_count,
+						available: @queue.size,
+						timing: @timing.statistics
+					}
+				end
+			end
+			
 			protected
 			
 			# Acquire a resource from the queue with optional deadline.
