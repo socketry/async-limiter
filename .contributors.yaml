@@ -1,0 +1,11 @@
+- path: lib/async/limiter/queued.rb
+  time: 2025-05-22T16:58:09+00:00
+  author:
+    name: Francisco Mejia
+    email: francisco.mejia@shopify.com
+
+- path: lib/async/limiter/token.rb
+  time: 2025-05-22T16:58:09+00:00
+  author:
+    name: Francisco Mejia
+    email: francisco.mejia@shopify.com
