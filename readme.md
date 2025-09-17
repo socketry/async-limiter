@@ -20,6 +20,25 @@ Please see the [project documentation](https://socketry.github.io/async-limiter/
 
   - [Token Usage](https://socketry.github.io/async-limiter/guides/token-usage/index) - This guide explains how to use tokens for advanced resource management with `async-limiter`. Tokens provide sophisticated resource handling with support for re-acquisition and automatic cleanup.
 
+## Releases
+
+Please see the [project releases](https://socketry.github.io/async-limiter/releases/index) for all releases.
+
+### v2.0.0
+
+The 2.0.x release should be considered somewhat unstable.
+
+  - **Breaking**: Complete API redesign. The v1.x classes (`Async::Limiter::Concurrent`, `Async::Limiter::Unlimited`, etc.) have been replaced with a new inheritance-based architecture.
+  - **Breaking**: Removed `blocking?` method due to inherent race conditions. Use `acquire(timeout: 0)` for non-blocking checks.
+  - **Breaking**: Timing strategies now use consumption-only model (no explicit `release` methods).
+  - **Breaking**: Window classes moved from `limiter/window/` to `limiter/timing/` with renamed classes.
+  - [New Architecture (replaces v1.x classes)](https://socketry.github.io/async-limiter/releases/index#new-architecture-\(replaces-v1.x-classes\))
+  - [Advanced Timeout Features](https://socketry.github.io/async-limiter/releases/index#advanced-timeout-features)
+  - [Cost-Based Acquisition](https://socketry.github.io/async-limiter/releases/index#cost-based-acquisition)
+  - [Enhanced Timing Strategies](https://socketry.github.io/async-limiter/releases/index#enhanced-timing-strategies)
+  - [Token-Based Resource Management](https://socketry.github.io/async-limiter/releases/index#token-based-resource-management)
+  - [Thread Safety and Performance](https://socketry.github.io/async-limiter/releases/index#thread-safety-and-performance)
+
 ## See Also
 
   - [falcon](https://github.com/socketry/falcon) - A high-performance web server
