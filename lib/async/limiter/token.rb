@@ -45,7 +45,7 @@ module Async
 			# Initialize a new token.
 			# @parameter limiter [Generic] The limiter that issued this token.
 			# @parameter resource [Object] The acquired resource.
-			def initialize(limiter, resource)
+			def initialize(limiter, resource = nil)
 				@limiter = limiter
 				@resource = resource
 			end
@@ -86,10 +86,16 @@ module Async
 				end
 			end
 			
+			# Check if the token has been acquired.
+			# @returns [Boolean] True if the token has been acquired.
+			def acquired?
+				!!@resource
+			end
+			
 			# Check if the token has been released.
 			# @returns [Boolean] True if the token has been released.
 			def released?
-				@resource.nil?
+				!@resource
 			end
 		end
 	end
