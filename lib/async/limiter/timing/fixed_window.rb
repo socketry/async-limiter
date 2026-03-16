@@ -25,8 +25,6 @@ module Async
 				# Get current timing strategy statistics.
 				# @returns [Hash] Statistics hash with current state.
 				def statistics
-					current_time = Time.now
-					
 					{
 						name: "FixedWindow",
 						window_duration: @duration,
