@@ -1,5 +1,11 @@
 # Releases
 
+## Unreleased
+
+  - Add telemetry counters to `Async::Limiter::Limited` and `Async::Limiter::Queued`: `acquired_count`, `available_count`, `waiting_count`, and `reacquire_waiting_count` for observability into limiter state.
+  - Add `as_json` and `to_json` methods to `Async::Limiter::Generic` for JSON serialization of limiter statistics.
+  - Fix unused variable warning in `Async::Limiter::Timing::FixedWindow`.
+
 ## v2.0.0
 
 The 2.0.x release should be considered somewhat unstable.
