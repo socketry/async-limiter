@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Released under the MIT License.
-# Copyright, 2025, by Shopify Inc.
+# Copyright, 2025-2026, by Shopify Inc.
 # Copyright, 2025, by Samuel Williams.
 
 require "async/queue"
@@ -27,7 +27,7 @@ describe Async::Limiter::Queued do
 		end
 		
 		it "can add resources via release" do
-			3.times {limiter.release("resource")}
+			3.times{limiter.release("resource")}
 			expect(limiter).not.to be(:limited?)
 			expect(limiter.acquire(timeout: 0)).to be == "resource"
 		end

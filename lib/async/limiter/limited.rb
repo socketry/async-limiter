@@ -2,7 +2,7 @@
 
 # Released under the MIT License.
 # Copyright, 2020, by Bruno Sutic.
-# Copyright, 2025, by Shopify Inc.
+# Copyright, 2025-2026, by Shopify Inc.
 # Copyright, 2025, by Samuel Williams.
 
 require_relative "generic"

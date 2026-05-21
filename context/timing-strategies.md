@@ -385,7 +385,7 @@ require "async/queue"
 
 # Create resource queue
 queue = Async::Queue.new
-3.times { |i| queue.push("worker_#{i}") }
+3.times{|i| queue.push("worker_#{i}")}
 
 # Add timing constraint
 timing = Async::Limiter::Timing::FixedWindow.new(2.0,
@@ -437,8 +437,8 @@ class RateLimitedAPIClient
 	
 	def make_request(endpoint, cost: 1.0)
 		@limiter.acquire(cost: cost) do
-		# Make actual HTTP request:
-		puts "Making request to #{endpoint} at #{Time.now}"
+			# Make actual HTTP request:
+			puts "Making request to #{endpoint} at #{Time.now}"
 			simulate_http_request(endpoint)
 		end
 	end

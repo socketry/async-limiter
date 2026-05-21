@@ -40,7 +40,7 @@ describe Async::Limiter::Timing::Ordered do
 			ordered_bucket = subject.new(bucket_timing)
 			
 			# Fill bucket to capacity
-			2.times {ordered_bucket.acquire(1.0)}
+			2.times{ordered_bucket.acquire(1.0)}
 			
 			# Should timeout when no capacity available
 			deadline = Async::Deadline.new(0.1)

@@ -7,7 +7,7 @@ Gem::Specification.new do |spec|
 	spec.version = Async::Limiter::VERSION
 	
 	spec.summary = "Execution rate limiting for Async"
-	spec.authors = ["Bruno Sutic", "Shopify Inc.", "Samuel Williams", "Francisco Mejia", "William"]
+	spec.authors = ["Bruno Sutic", "Shopify Inc.", "Samuel Williams", "William T. Nelson", "Francisco Mejia"]
 	spec.license = "MIT"
 	
 	spec.cert_chain  = ["release.cert"]
@@ -22,7 +22,7 @@ Gem::Specification.new do |spec|
 	
 	spec.files = Dir["{context,lib}/**/*", "*.md", base: __dir__]
 	
-	spec.required_ruby_version = ">= 3.2"
+	spec.required_ruby_version = ">= 3.3"
 	
 	spec.add_dependency "async", ">= 2.31"
 end

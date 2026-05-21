@@ -35,7 +35,7 @@ require "async/limiter"
 
 Async do
 	limiter = Async::Limiter::Generic.new
-
+	
 	# Create async tasks through the limiter:
 	tasks = 5.times.map do |i|
 		limiter.async do |task|
@@ -81,7 +81,7 @@ Async do
 	# Allow unlimited concurrency but rate limit to 10 operations per second:
 	timing = Async::Limiter::Timing::LeakyBucket.new(10.0, 50.0)
 	limiter = Async::Limiter::Generic.new(timing: timing)
-
+	
 	# All tasks start immediately, but timing strategy controls rate:
 	100.times do |i|
 		limiter.async do |task|

@@ -55,14 +55,14 @@ describe Async::Limiter::Timing::LeakyBucket do
 		no_leak_bucket = subject.new(0.0, 5.0)
 		
 		# Fill beyond capacity
-		10.times {no_leak_bucket.acquire}
+		10.times{no_leak_bucket.acquire}
 		expect(no_leak_bucket.level).to be == 10.0  # Level can exceed capacity
 		expect(no_leak_bucket.can_acquire?).to be == false  # But still blocks new requests
 	end
 	
 	it "handles rapid acquisition and leaking" do
 		# Rapid acquisitions
-		3.times {bucket.acquire}
+		3.times{bucket.acquire}
 		initial_level = bucket.level
 		
 		# Simulate time passing (1.0 second = 2 units should leak out at 2 units/sec)

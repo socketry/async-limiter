@@ -4,6 +4,7 @@
 # Copyright, 2020, by Bruno Sutic.
 # Copyright, 2025, by Shopify Inc.
 # Copyright, 2025, by Samuel Williams.
+# Copyright, 2026, by William T. Nelson.
 
 require_relative "sliding_window"
 

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Released under the MIT License.
-# Copyright, 2025, by Shopify Inc.
+# Copyright, 2025-2026, by Shopify Inc.
 # Copyright, 2025, by Samuel Williams.
 
 require "async/limiter/limited"
@@ -194,11 +194,11 @@ describe Async::Limiter::Limited do
 				
 				# Start multiple tasks with different timeouts:
 				tasks = [
-						Async{limiter.acquire(timeout: 0.002); results << "Long timeout."},
-						Async{limiter.acquire(timeout: 0);     results << "Non-blocking."},
-						Async{limiter.acquire(timeout: 0.001); results << "Short timeout."},
-						Async{limiter.acquire(timeout: 0);     results << "Non-blocking."},
-					]
+					Async{limiter.acquire(timeout: 0.002); results << "Long timeout."},
+					Async{limiter.acquire(timeout: 0);     results << "Non-blocking."},
+					Async{limiter.acquire(timeout: 0.001); results << "Short timeout."},
+					Async{limiter.acquire(timeout: 0);     results << "Non-blocking."},
+				]
 				
 				tasks.map(&:wait)
 				expect(results).to be == ["Non-blocking.", "Non-blocking.", "Short timeout.", "Long timeout."]

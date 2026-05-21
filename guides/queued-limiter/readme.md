@@ -42,7 +42,7 @@ For fine-grained control over resource lifecycle:
 
 ```ruby
 queue = Async::Queue.new
-3.times { |i| queue.push("resource_#{i}") }
+3.times{|i| queue.push("resource_#{i}")}
 
 limiter = Async::Limiter::Queued.new(queue)
 
@@ -71,7 +71,7 @@ Async do
 	queue = Async::PriorityQueue.new
 	limiter = Async::Limiter::Queued.new(queue)
 	results = []
-
+	
 	# Start tasks with different priorities
 	tasks = [
 		Async do
@@ -100,9 +100,9 @@ Async do
 	2.times do |i|
 		limiter.release("worker_#{i}")
 	end
-
+	
 	tasks.each(&:wait)
-
+	
 	puts results
 	# High priority task gets resource first, then medium, then low.
 end

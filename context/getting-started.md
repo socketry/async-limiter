@@ -86,7 +86,7 @@ Async do
 	
 	limiter.acquire(timeout: 3)
 	# => nil
-
+	
 	limiter.acquire(timeout: 3) do
 		puts "Acquired."
 	end or puts "Timed out!"
@@ -199,8 +199,8 @@ fair_limiter.acquire(cost: 8.0) do
 end
 
 # These must wait even though they need fewer tokens
-fair_limiter.acquire(cost: 0.5) { puts "Quick op 1" }  # Blocked
-fair_limiter.acquire(cost: 0.5) { puts "Quick op 2" }  # Blocked
+fair_limiter.acquire(cost: 0.5){puts "Quick op 1"}  # Blocked
+fair_limiter.acquire(cost: 0.5){puts "Quick op 2"}  # Blocked
 ```
 
 #### Choosing the Right Strategy

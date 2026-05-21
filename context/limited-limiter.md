@@ -89,16 +89,16 @@ The limiter prevents convoy effects where quick timeouts aren't blocked by slow 
 limiter = Async::Limiter::Limited.new(1)
 Async do
 	limiter.acquire  # Fill to capacity.
-
+	
 	results = []
-
+	
 	# Start multiple tasks with different timeouts:
 	tasks = [
-		Async {limiter.acquire(timeout: 1.0); results << "Long timeout."},
-		Async {limiter.acquire(timeout: 0.1); results << "Short timeout."},
-		Async {limiter.acquire(timeout: 0);   results << "Non-blocking."},
+		Async{limiter.acquire(timeout: 1.0); results << "Long timeout."},
+		Async{limiter.acquire(timeout: 0.1); results << "Short timeout."},
+		Async{limiter.acquire(timeout: 0);   results << "Non-blocking."},
 	]
-
+	
 	# All tasks complete quickly, even with a long timeout task present:
 	tasks.map(&:wait)
 	puts results

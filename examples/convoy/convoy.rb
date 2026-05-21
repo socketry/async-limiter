@@ -19,7 +19,7 @@ timing = Async::Limiter::Timing::Ordered.new(timing)
 limiter = Async::Limiter::Limited.new(100, timing: timing)  # High concurrency, low timing capacity
 
 # Fill the bucket to capacity first
-10.times {limiter.acquire(cost: 1.0)}
+10.times{limiter.acquire(cost: 1.0)}
 
 puts "Bucket filled to capacity (10.0). Starting test..."
 
