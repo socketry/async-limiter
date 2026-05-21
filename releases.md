@@ -1,6 +1,6 @@
 # Releases
 
-## Unreleased
+## v2.2.0
 
   - Add `async-utilization` metrics for limiter telemetry counters.
 

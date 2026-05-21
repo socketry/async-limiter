@@ -24,6 +24,10 @@ Please see the [project documentation](https://socketry.github.io/async-limiter/
 
 Please see the [project releases](https://socketry.github.io/async-limiter/releases/index) for all releases.
 
+### v2.2.0
+
+  - Add `async-utilization` metrics for limiter telemetry counters.
+
 ### v2.1.0
 
   - Add telemetry counters to `Async::Limiter::Limited` and `Async::Limiter::Queued`: `acquired_count`, `available_count`, `waiting_count`, and `reacquire_waiting_count` for observability into limiter state.
