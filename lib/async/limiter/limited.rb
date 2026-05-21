@@ -28,6 +28,8 @@ module Async
 				
 				@limit = limit
 				@count = 0
+				@waiting_count = 0
+				@reacquire_waiting_count = 0
 				
 				@available = ConditionVariable.new
 			end
@@ -37,6 +39,26 @@ module Async
 			
 			# @attribute [Integer] Current count of active tasks.
 			attr_reader :count
+			
+			# @returns [Integer] Current count of active tasks.
+			def acquired_count
+				@mutex.synchronize{@count}
+			end
+			
+			# @returns [Integer] Current count of available capacity.
+			def available_count
+				@mutex.synchronize{@limit - @count}
+			end
+			
+			# @returns [Integer] Current count of tasks waiting for capacity.
+			def waiting_count
+				@mutex.synchronize{@waiting_count}
+			end
+			
+			# @returns [Integer] Current count of reacquiring tasks waiting for capacity.
+			def reacquire_waiting_count
+				@mutex.synchronize{@reacquire_waiting_count}
+			end
 			
 			# Check if a new task can be acquired.
 			# @returns [Boolean] True if under the limit.
@@ -64,6 +86,10 @@ module Async
 					{
 						limit: @limit,
 						count: @count,
+						acquired_count: @count,
+						available_count: @limit - @count,
+						waiting_count: @waiting_count,
+						reacquire_waiting_count: @reacquire_waiting_count,
 						timing: @timing.statistics
 					}
 				end
@@ -72,14 +98,22 @@ module Async
 			protected
 			
 			# Acquire resource with optional deadline.
-			def acquire_resource(deadline, **options)
+			def acquire_resource(deadline, reacquire: false, **options)
 				# Fast path: immediate return for expired deadlines, but only if at capacity
 				return nil if deadline&.expired? && @count >= @limit
+				
+				waiting = false
 				
 				# Wait for capacity with deadline tracking
 				while @count >= @limit
 					remaining = deadline&.remaining
 					return nil if remaining && remaining <= 0
+					
+					unless waiting
+						@waiting_count += 1
+						@reacquire_waiting_count += 1 if reacquire
+						waiting = true
+					end
 					
 					unless @available.wait(@mutex, remaining)
 						return nil  # Timeout exceeded
@@ -89,6 +123,11 @@ module Async
 				@count += 1
 				
 				return true
+			ensure
+				if waiting
+					@waiting_count -= 1
+					@reacquire_waiting_count -= 1 if reacquire
+				end
 			end
 			
 			# Release resource.

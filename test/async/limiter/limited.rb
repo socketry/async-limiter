@@ -53,6 +53,43 @@ describe Async::Limiter::Limited do
 			expect(limiter.acquire(timeout: 0)).to be == true
 		end
 		
+		it "tracks waiting tasks" do
+			limiter.acquire
+			limiter.acquire
+			
+			thread = Thread.new do
+				limiter.acquire
+			end
+			
+			Thread.pass until limiter.waiting_count == 1
+			
+			expect(limiter.statistics[:waiting_count]).to be == 1
+			expect(limiter.statistics[:reacquire_waiting_count]).to be == 0
+			
+			limiter.release
+			expect(thread.value).to be == true
+			expect(limiter.statistics[:waiting_count]).to be == 0
+		end
+		
+		it "tracks reacquiring waiting tasks separately" do
+			limiter.acquire
+			limiter.acquire
+			
+			thread = Thread.new do
+				limiter.acquire(reacquire: true)
+			end
+			
+			Thread.pass until limiter.reacquire_waiting_count == 1
+			
+			expect(limiter.statistics[:waiting_count]).to be == 1
+			expect(limiter.statistics[:reacquire_waiting_count]).to be == 1
+			
+			limiter.release
+			expect(thread.value).to be == true
+			expect(limiter.statistics[:waiting_count]).to be == 0
+			expect(limiter.statistics[:reacquire_waiting_count]).to be == 0
+		end
+		
 		it "handles deadline timeouts during condition variable waits" do
 			# Fill limiter to capacity
 			limiter.acquire  # 1/2

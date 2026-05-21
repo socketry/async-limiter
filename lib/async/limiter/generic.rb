@@ -6,6 +6,7 @@
 
 require "async/task"
 require "async/deadline"
+require "json"
 require_relative "timing/none"
 require_relative "timing/sliding_window"
 require_relative "token"
@@ -133,6 +134,18 @@ module Async
 						timing: @timing.statistics
 					}
 				end
+			end
+			
+			# Get a JSON-compatible representation of the limiter statistics.
+			# @returns [Hash] Statistics hash with current state.
+			def as_json(...)
+				statistics
+			end
+			
+			# Get a JSON string representation of the limiter statistics.
+			# @returns [String] JSON encoded statistics.
+			def to_json(...)
+				as_json.to_json(...)
 			end
 			
 			protected

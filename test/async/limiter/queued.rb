@@ -102,6 +102,39 @@ describe Async::Limiter::Queued do
 			# Should be empty again
 			expect(limiter).to be(:limited?)
 		end
+		
+		it "tracks acquired resources" do
+			limiter.expand(2, "tracked_resource")
+			
+			resource = limiter.acquire(timeout: 0)
+			
+			expect(resource).to be == "tracked_resource"
+			expect(limiter.statistics[:acquired_count]).to be == 1
+			expect(limiter.statistics[:available_count]).to be == 1
+			
+			limiter.release(resource)
+			
+			expect(limiter.statistics[:acquired_count]).to be == 0
+			expect(limiter.statistics[:available_count]).to be == 2
+		end
+		
+		it "tracks reacquiring waiting tasks separately" do
+			task = reactor.async do
+				limiter.acquire(reacquire: true)
+			end
+			
+			sleep 0.01 until limiter.reacquire_waiting_count == 1
+			
+			expect(limiter.statistics[:waiting_count]).to be == 1
+			expect(limiter.statistics[:reacquire_waiting_count]).to be == 1
+			
+			limiter.release("resource")
+			
+			expect(task.wait).to be == "resource"
+			expect(limiter.statistics[:waiting_count]).to be == 0
+			expect(limiter.statistics[:reacquire_waiting_count]).to be == 0
+			expect(limiter.statistics[:acquired_count]).to be == 1
+		end
 	end
 	
 	with "priority queue" do

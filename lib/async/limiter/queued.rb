@@ -33,10 +33,32 @@ module Async
 			def initialize(queue = self.class.default_queue, timing: Timing::None, parent: nil)
 				super(timing: timing, parent: parent)
 				@queue = queue
+				@acquired_count = 0
+				@reacquire_waiting_count = 0
 			end
 			
 			# @attribute [Queue] The queue managing resources.
 			attr_reader :queue
+			
+			# @returns [Integer] Current count of acquired resources.
+			def acquired_count
+				@mutex.synchronize{@acquired_count}
+			end
+			
+			# @returns [Integer] Current count of available resources.
+			def available_count
+				@queue.size
+			end
+			
+			# @returns [Integer] Current count of tasks waiting for resources.
+			def waiting_count
+				@queue.waiting_count
+			end
+			
+			# @returns [Integer] Current count of reacquiring tasks waiting for resources.
+			def reacquire_waiting_count
+				@mutex.synchronize{@reacquire_waiting_count}
+			end
 			
 			# Check if a new task can be acquired.
 			# @returns [Boolean] True if resources are available.
@@ -60,6 +82,10 @@ module Async
 					{
 						waiting: @queue.waiting_count,
 						available: @queue.size,
+						acquired_count: @acquired_count,
+						available_count: @queue.size,
+						waiting_count: @queue.waiting_count,
+						reacquire_waiting_count: @reacquire_waiting_count,
 						timing: @timing.statistics
 					}
 				end
@@ -69,14 +95,23 @@ module Async
 			
 			# Acquire a resource from the queue with optional deadline.
 			def acquire_resource(deadline, reacquire: false, **options)
+				@reacquire_waiting_count += 1 if reacquire
+				
 				@mutex.unlock
-				return @queue.pop(timeout: deadline&.remaining, **options)
+				resource = @queue.pop(timeout: deadline&.remaining, **options)
+				return resource
 			ensure
 				@mutex.lock
+				@reacquire_waiting_count -= 1 if reacquire
+				@acquired_count += 1 if resource
 			end
 			
 			# Release a previously acquired resource back to the queue.
 			def release_resource(value)
+				@mutex.synchronize do
+					@acquired_count -= 1 if @acquired_count > 0
+				end
+				
 				# Return a default resource to the queue:
 				@queue.push(value)
 			end
