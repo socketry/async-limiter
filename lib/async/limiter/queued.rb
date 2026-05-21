@@ -28,13 +28,17 @@ module Async
 			
 			# Initialize a queue-based limiter.
 			# @parameter queue [#push, #pop, #empty?] Thread-safe queue containing pre-existing resources.
-			# @parameter timing [#acquire, #wait, #maximum_cost] Strategy for timing constraints.
-			# @parameter parent [Async::Task, nil] Parent task for creating child tasks.
-			def initialize(queue = self.class.default_queue, timing: Timing::None, parent: nil)
-				super(timing: timing, parent: parent)
+			# @parameter options [Hash] Options passed to {Generic#initialize}.
+			def initialize(queue = self.class.default_queue, **options)
+				super(**options)
 				@queue = queue
-				@acquired_count = 0
-				@reacquire_waiting_count = 0
+				
+				@acquired_count_metric = @utilization.metric(:acquired_count)
+				@available_count_metric = @utilization.metric(:available_count)
+				@waiting_count_metric = @utilization.metric(:waiting_count)
+				@reacquire_waiting_count_metric = @utilization.metric(:reacquire_waiting_count)
+				
+				update_utilization_metrics
 			end
 			
 			# @attribute [Queue] The queue managing resources.
@@ -42,7 +46,7 @@ module Async
 			
 			# @returns [Integer] Current count of acquired resources.
 			def acquired_count
-				@mutex.synchronize{@acquired_count}
+				@acquired_count_metric.value
 			end
 			
 			# @returns [Integer] Current count of available resources.
@@ -57,7 +61,7 @@ module Async
 			
 			# @returns [Integer] Current count of reacquiring tasks waiting for resources.
 			def reacquire_waiting_count
-				@mutex.synchronize{@reacquire_waiting_count}
+				@reacquire_waiting_count_metric.value
 			end
 			
 			# Check if a new task can be acquired.
@@ -73,6 +77,8 @@ module Async
 				count.times do
 					@queue.push(value)
 				end
+				
+				update_utilization_metrics
 			end
 			
 			# Get current limiter statistics.
@@ -82,10 +88,10 @@ module Async
 					{
 						waiting: @queue.waiting_count,
 						available: @queue.size,
-						acquired_count: @acquired_count,
+						acquired_count: @acquired_count_metric.value,
 						available_count: @queue.size,
 						waiting_count: @queue.waiting_count,
-						reacquire_waiting_count: @reacquire_waiting_count,
+						reacquire_waiting_count: @reacquire_waiting_count_metric.value,
 						timing: @timing.statistics
 					}
 				end
@@ -95,25 +101,36 @@ module Async
 			
 			# Acquire a resource from the queue with optional deadline.
 			def acquire_resource(deadline, reacquire: false, **options)
-				@reacquire_waiting_count += 1 if reacquire
+				@reacquire_waiting_count_metric.increment if reacquire
+				update_utilization_metrics if reacquire
 				
 				@mutex.unlock
 				resource = @queue.pop(timeout: deadline&.remaining, **options)
 				return resource
 			ensure
 				@mutex.lock
-				@reacquire_waiting_count -= 1 if reacquire
-				@acquired_count += 1 if resource
+				@reacquire_waiting_count_metric.decrement if reacquire
+				@acquired_count_metric.increment if resource
+				update_utilization_metrics if reacquire || resource
 			end
 			
 			# Release a previously acquired resource back to the queue.
 			def release_resource(value)
 				@mutex.synchronize do
-					@acquired_count -= 1 if @acquired_count > 0
+					@acquired_count_metric.decrement if @acquired_count_metric.value > 0
+					update_utilization_metrics
 				end
 				
 				# Return a default resource to the queue:
 				@queue.push(value)
+				update_utilization_metrics
+			end
+			
+			private
+			
+			def update_utilization_metrics
+				@available_count_metric.set(@queue.size)
+				@waiting_count_metric.set(@queue.waiting_count)
 			end
 		end
 	end

@@ -20,18 +20,22 @@ module Async
 		class Limited < Generic
 			# Initialize a limited concurrency limiter.
 			# @parameter limit [Integer] Maximum concurrent tasks allowed.
-			# @parameter timing [#acquire, #wait, #maximum_cost] Strategy for timing constraints.
-			# @parameter parent [Async::Task, nil] Parent task for creating child tasks.
+			# @parameter options [Hash] Options passed to {Generic#initialize}.
 			# @raises [ArgumentError] If limit is not positive.
-			def initialize(limit = 1, timing: Timing::None, parent: nil)
-				super(timing: timing, parent: parent)
+			def initialize(limit = 1, **options)
+				super(**options)
 				
 				@limit = limit
 				@count = 0
-				@waiting_count = 0
-				@reacquire_waiting_count = 0
 				
 				@available = ConditionVariable.new
+				
+				@acquired_count_metric = @utilization.metric(:acquired_count)
+				@available_count_metric = @utilization.metric(:available_count)
+				@waiting_count_metric = @utilization.metric(:waiting_count)
+				@reacquire_waiting_count_metric = @utilization.metric(:reacquire_waiting_count)
+				
+				update_utilization_metrics
 			end
 			
 			# @attribute [Integer] The maximum number of concurrent tasks.
@@ -52,12 +56,12 @@ module Async
 			
 			# @returns [Integer] Current count of tasks waiting for capacity.
 			def waiting_count
-				@mutex.synchronize{@waiting_count}
+				@waiting_count_metric.value
 			end
 			
 			# @returns [Integer] Current count of reacquiring tasks waiting for capacity.
 			def reacquire_waiting_count
-				@mutex.synchronize{@reacquire_waiting_count}
+				@reacquire_waiting_count_metric.value
 			end
 			
 			# Check if a new task can be acquired.
@@ -73,6 +77,7 @@ module Async
 				@mutex.synchronize do
 					old_limit = @limit
 					@limit = new_limit
+					update_utilization_metrics
 					
 					# Wake up waiting tasks if limit increased:
 					@available.broadcast if new_limit > old_limit
@@ -88,8 +93,8 @@ module Async
 						count: @count,
 						acquired_count: @count,
 						available_count: @limit - @count,
-						waiting_count: @waiting_count,
-						reacquire_waiting_count: @reacquire_waiting_count,
+						waiting_count: @waiting_count_metric.value,
+						reacquire_waiting_count: @reacquire_waiting_count_metric.value,
 						timing: @timing.statistics
 					}
 				end
@@ -103,6 +108,7 @@ module Async
 				return nil if deadline&.expired? && @count >= @limit
 				
 				waiting = false
+				acquired = false
 				
 				# Wait for capacity with deadline tracking
 				while @count >= @limit
@@ -110,8 +116,8 @@ module Async
 					return nil if remaining && remaining <= 0
 					
 					unless waiting
-						@waiting_count += 1
-						@reacquire_waiting_count += 1 if reacquire
+						@waiting_count_metric.increment
+						@reacquire_waiting_count_metric.increment if reacquire
 						waiting = true
 					end
 					
@@ -121,21 +127,32 @@ module Async
 				end
 				
 				@count += 1
+				acquired = true
 				
 				return true
 			ensure
 				if waiting
-					@waiting_count -= 1
-					@reacquire_waiting_count -= 1 if reacquire
+					@waiting_count_metric.decrement
+					@reacquire_waiting_count_metric.decrement if reacquire
 				end
+				
+				update_utilization_metrics if acquired
 			end
 			
 			# Release resource.
 			def release_resource(resource)
 				@mutex.synchronize do
 					@count -= 1
+					update_utilization_metrics
 					@available.signal
 				end
+			end
+			
+			private
+			
+			def update_utilization_metrics
+				@acquired_count_metric.set(@count)
+				@available_count_metric.set(@limit - @count)
 			end
 		end
 	end
