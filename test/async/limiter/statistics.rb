@@ -4,6 +4,7 @@
 # Copyright, 2025, by Shopify Inc.
 
 require "async/limiter"
+require "json"
 
 describe Async::Limiter::Generic do
 	it "provides basic statistics" do
@@ -25,6 +26,10 @@ describe Async::Limiter::Limited do
 		expect(statistics).to be_a(Hash)
 		expect(statistics[:limit]).to be == 3
 		expect(statistics[:count]).to be == 0
+		expect(statistics[:acquired_count]).to be == 0
+		expect(statistics[:available_count]).to be == 3
+		expect(statistics[:waiting_count]).to be == 0
+		expect(statistics[:reacquire_waiting_count]).to be == 0
 		expect(statistics[:timing]).to be_a(Hash)
 	end
 	
@@ -36,6 +41,8 @@ describe Async::Limiter::Limited do
 		
 		expect(statistics[:limit]).to be == 3
 		expect(statistics[:count]).to be == 2
+		expect(statistics[:acquired_count]).to be == 2
+		expect(statistics[:available_count]).to be == 1
 	end
 	
 	it "updates statistics after release" do
@@ -51,6 +58,14 @@ describe Async::Limiter::Limited do
 		limiter.release(resource2)  # 0/3
 		
 		expect(limiter.statistics[:count]).to be == 0
+	end
+	
+	it "provides a JSON representation" do
+		statistics = JSON.parse(limiter.to_json)
+		
+		expect(statistics["limit"]).to be == 3
+		expect(statistics["acquired_count"]).to be == 0
+		expect(statistics["available_count"]).to be == 3
 	end
 	
 	it "is thread-safe" do
@@ -100,6 +115,10 @@ describe Async::Limiter::Queued do
 		expect(statistics).to be_a(Hash)
 		expect(statistics[:waiting]).to be_a(Integer)
 		expect(statistics[:available]).to be_a(Integer)
+		expect(statistics[:acquired_count]).to be == 0
+		expect(statistics[:available_count]).to be_a(Integer)
+		expect(statistics[:waiting_count]).to be_a(Integer)
+		expect(statistics[:reacquire_waiting_count]).to be == 0
 		expect(statistics[:timing]).to be_a(Hash)
 	end
 	
@@ -111,21 +130,39 @@ describe Async::Limiter::Queued do
 		
 		# Initially empty
 		expect(limiter.statistics[:available]).to be == 0
+		expect(limiter.statistics[:available_count]).to be == 0
 		
 		# Add resources
 		limiter.release("worker1")
 		limiter.release("worker2")
 		
 		expect(limiter.statistics[:available]).to be == 2
+		expect(limiter.statistics[:available_count]).to be == 2
 		
 		# Consume one resource
 		resource = limiter.acquire(timeout: 0)
 		expect(resource).to be == "worker1"
 		expect(limiter.statistics[:available]).to be == 1
+		expect(limiter.statistics[:available_count]).to be == 1
+		expect(limiter.statistics[:acquired_count]).to be == 1
 		
 		# Return resource
 		limiter.release(resource)
 		expect(limiter.statistics[:available]).to be == 2
+		expect(limiter.statistics[:available_count]).to be == 2
+		expect(limiter.statistics[:acquired_count]).to be == 0
+	end
+	
+	it "provides a JSON representation" do
+		require "async/queue"
+		
+		queue = Async::Queue.new
+		limiter = Async::Limiter::Queued.new(queue)
+		statistics = JSON.parse(limiter.to_json)
+		
+		expect(statistics["acquired_count"]).to be == 0
+		expect(statistics["available_count"]).to be == 0
+		expect(statistics["waiting_count"]).to be == 0
 	end
 end
 
