@@ -1,5 +1,9 @@
 # Releases
 
+## Unreleased
+
+  - Add `async-utilization` metrics for limiter telemetry counters.
+
 ## v2.1.0
 
   - Add telemetry counters to `Async::Limiter::Limited` and `Async::Limiter::Queued`: `acquired_count`, `available_count`, `waiting_count`, and `reacquire_waiting_count` for observability into limiter state.

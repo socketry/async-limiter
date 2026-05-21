@@ -6,6 +6,7 @@
 
 require "async/task"
 require "async/deadline"
+require "async/utilization"
 require "json"
 require_relative "timing/none"
 require_relative "timing/sliding_window"
@@ -24,16 +25,21 @@ module Async
 			# Initialize a new generic limiter.
 			# @parameter timing [#acquire, #wait, #maximum_cost] Strategy for timing constraints.
 			# @parameter parent [Async::Task, nil] Parent task for creating child tasks.
-			def initialize(timing: Timing::None, parent: nil, tags: nil)
+			# @parameter utilization [#metric] Registry-like object for utilization metrics.
+			def initialize(timing: Timing::None, parent: nil, tags: nil, utilization: Async::Utilization::Registry.new)
 				@timing = timing
 				@parent = parent
 				@tags = tags
+				@utilization = utilization
 				
 				@mutex = Mutex.new
 			end
 			
 			# @attribute [Array(String)] Tags associated with this limiter for identification or categorization.
 			attr :tags
+			
+			# @attribute [#metric] Registry-like object for utilization metrics.
+			attr :utilization
 			
 			# @returns [Boolean] Whether this limiter is currently limiting concurrency.
 			def limited?
@@ -67,7 +73,7 @@ module Async
 			end
 			
 			# Manually acquire a resource with timing and concurrency coordination.
-			# 
+			#
 			# This method provides the core acquisition logic with support for:
 			# - Flexible timeout handling (blocking, non-blocking, timed)
 			# - Cost-based consumption for timing strategies
