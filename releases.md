@@ -1,6 +1,6 @@
 # Releases
 
-## Unreleased
+## v2.3.0
 
   - Add `Async::Limiter::Token#close` to release and permanently invalidate a token.
   - Expose `Async::Limiter::Generic#timing`.

@@ -24,6 +24,11 @@ Please see the [project documentation](https://socketry.github.io/async-limiter/
 
 Please see the [project releases](https://socketry.github.io/async-limiter/releases/index) for all releases.
 
+### v2.3.0
+
+  - Add `Async::Limiter::Token#close` to release and permanently invalidate a token.
+  - Expose `Async::Limiter::Generic#timing`.
+
 ### v2.2.0
 
   - Add `async-utilization` metrics for limiter telemetry counters.
