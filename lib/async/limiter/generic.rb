@@ -35,6 +35,9 @@ module Async
 				@mutex = Mutex.new
 			end
 			
+			# @attribute [Timing] Strategy for timing constraints.        
+			attr :timing
+			
 			# @attribute [Array(String)] Tags associated with this limiter for identification or categorization.
 			attr :tags
 			
