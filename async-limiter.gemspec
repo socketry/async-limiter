@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
 	spec.cert_chain  = ["release.cert"]
 	spec.signing_key = File.expand_path("~/.gem/release.pem")
 	
-	spec.homepage = "https://github.com/bruno-/async-limiter"
+	spec.homepage = "https://github.com/socketry/async-limiter"
 	
 	spec.metadata = {
 		"documentation_uri" => "https://socketry.github.io/async-limiter/",
