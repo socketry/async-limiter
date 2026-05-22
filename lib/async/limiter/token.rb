@@ -14,7 +14,8 @@ module Async
 		# re-acquisition with modified parameters while maintaining the original context.
 		#
 		# The token automatically tracks release state using the resource itself as the
-		# state indicator (nil = released, non-nil = acquired).
+		# state indicator (nil = released, non-nil = acquired). A closed token also
+		# clears its limiter reference, which prevents future re-acquisition.
 		class Token
 			# Acquire a token from a limiter.
 			#
@@ -61,6 +62,12 @@ module Async
 				end
 			end
 			
+			# Close the token and prevent future re-acquisition.
+			def close
+				self.release
+				@limiter = nil
+			end
+			
 			# Re-acquire the resource with modified options.
 			#
 			# This allows changing acquisition parameters (timeout, cost, priority, etc.)
@@ -74,6 +81,7 @@ module Async
 			# @asynchronous
 			def acquire(**options, &block)
 				raise "Token already acquired!" if @resource
+				return nil unless @limiter
 				
 				@resource = @limiter.acquire(reacquire: true, **options)
 				
@@ -96,6 +104,12 @@ module Async
 			# @returns [Boolean] True if the token has been released.
 			def released?
 				!@resource
+			end
+			
+			# Check if the token has been closed.
+			# @returns [Boolean] True if the token has been closed.
+			def closed?
+				!@limiter
 			end
 		end
 	end

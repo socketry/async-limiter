@@ -1,5 +1,9 @@
 # Releases
 
+## Unreleased
+
+  - Add `Async::Limiter::Token#close` to release and permanently invalidate a token.
+
 ## v2.2.0
 
   - Add `async-utilization` metrics for limiter telemetry counters.
