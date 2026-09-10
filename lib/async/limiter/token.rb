@@ -9,9 +9,8 @@ module Async
 	module Limiter
 		# Token that represents an acquired resource and can be used to release or re-acquire.
 		#
-		# Tokens provide advanced resource management by encapsulating both the acquired
-		# resource and the acquisition options (timeout, cost, priority, etc.). This enables
-		# re-acquisition with modified parameters while maintaining the original context.
+		# Tokens encapsulate the acquired resource and its limiter, allowing the resource
+		# to be released and re-acquired.
 		#
 		# The token automatically tracks release state using the resource itself as the
 		# state indicator (nil = released, non-nil = acquired). A closed token also
@@ -43,6 +42,7 @@ module Async
 					token.release
 				end
 			end
+			
 			# Initialize a new token.
 			# @parameter limiter [Generic] The limiter that issued this token.
 			# @parameter resource [Object] The acquired resource.
@@ -68,15 +68,15 @@ module Async
 				@limiter = nil
 			end
 			
-			# Re-acquire the resource with modified options.
+			# Re-acquire the resource.
 			#
-			# This allows changing acquisition parameters (timeout, cost, priority, etc.)
-			# while maintaining the token context. The current resource is released
-			# and a new one is acquired with the merged options.
-			#
-			# @parameter new_options [Hash] New acquisition options (timeout, cost, priority, etc.).
-			#   These are merged with the original options, with new options taking precedence.
-			# @returns [Token] A new token for the re-acquired resource.
+			# @parameter options [Hash] Acquisition options (timeout, cost, priority, etc.).
+			#   Omitted options use the limiter's defaults.
+			# @yields {|resource| ...} Optional block executed with automatic token release.
+			#   @parameter resource [Object, nil] The acquired resource, or nil if acquisition failed.
+			# @returns [Object, nil] The acquired resource, or nil if acquisition failed or the token is closed.
+			#   When used with a block, returns the result of the block execution unless the token is closed.
+			# @raises [RuntimeError] If the token is already acquired.
 			# @raises [ArgumentError] If the new cost exceeds timing strategy capacity.
 			# @asynchronous
 			def acquire(**options, &block)
